@@ -105,7 +105,7 @@ export async function updateGroup(
 
   revalidatePath(`/g/${groupId}`);
   revalidatePath("/dashboard");
-  return done("Listo, parche actualizado.");
+  return done("Listo, grupo actualizado.");
 }
 
 /**
@@ -128,7 +128,7 @@ export async function drawGroup(
 
   revalidatePath(`/g/${groupId}`);
   revalidatePath("/dashboard");
-  return done(`¡Sorteo hecho con ${data} parceros! Ya puedes ver a quién te salió.`);
+  return done(`¡Sorteo hecho con ${data} amigos! Ya puedes ver a quién te salió.`);
 }
 
 export async function resetDraw(

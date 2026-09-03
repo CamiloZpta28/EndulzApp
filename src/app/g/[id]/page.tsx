@@ -2,14 +2,14 @@ import { notFound } from "next/navigation";
 import { Candy, Lock, Sparkles, Users } from "lucide-react";
 
 import { AppHeader } from "@/components/app-header";
-import { AssignmentReveal } from "@/components/assignment-reveal";
+import { AssignmentGate } from "@/components/assignment-gate";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BudgetBanner } from "@/components/budget-banner";
 import { DrawPanel } from "@/components/draw-panel";
+import { GroupDate } from "@/components/group-date";
 import { GroupSettingsDialog } from "@/components/group-settings-dialog";
 import { ImportWishlistButton } from "@/components/import-wishlist-button";
 import { InviteCard } from "@/components/invite-card";
-import { NicknameDialog } from "@/components/nickname-dialog";
 import { RosterList } from "@/components/roster-list";
 import { Shell } from "@/components/shell";
 import { WishlistSection } from "@/components/wishlist-section";
@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getGroupPageData, getProfile, requireUser } from "@/lib/db";
 import { getSiteOrigin } from "@/lib/site";
-import { displayName, formatGroupDate, groupByType } from "@/lib/format";
+import { displayName, groupByType } from "@/lib/format";
 
 export default async function GroupPage({
   params,
@@ -46,6 +46,7 @@ export default async function GroupPage({
     targetItems,
     profileItemCount,
     endulzadas,
+    visibleWishlists,
   } = data;
   if (!myMember && !isAdmin) notFound();
 
@@ -65,7 +66,7 @@ export default async function GroupPage({
       <AppHeader
         title={group.name}
         emoji={group.emoji}
-        subtitle={`${roster.length} ${roster.length === 1 ? "parcero" : "parceros"} · ${
+        subtitle={`${roster.length} ${roster.length === 1 ? "amigo" : "amigos"} · ${
           group.status === "drawn" ? "sorteado" : "sin sortear"
         }`}
         backHref="/dashboard"
@@ -90,8 +91,8 @@ export default async function GroupPage({
           <Tabs defaultValue="mi-lista">
             <TabsList className="w-full">
               <TabsTrigger value="mi-lista">Mi lista</TabsTrigger>
-              <TabsTrigger value="mi-parcero">Me salió</TabsTrigger>
-              <TabsTrigger value="parche">Parche</TabsTrigger>
+              <TabsTrigger value="mi-amigo">Me salió</TabsTrigger>
+              <TabsTrigger value="parche">Grupo</TabsTrigger>
             </TabsList>
 
             {/* ------------------------------------------------- mi wishlist */}
@@ -129,7 +130,7 @@ export default async function GroupPage({
               ) : (
                 <Alert>
                   <AlertDescription>
-                    Administras este parche pero no tienes puesto en el sorteo,
+                    Administras este grupo pero no tienes puesto en el sorteo,
                     así que no hay lista para llenar. Ábrete el enlace de
                     invitación y únete como cualquier otro.
                   </AlertDescription>
@@ -138,7 +139,7 @@ export default async function GroupPage({
             </TabsContent>
 
             {/* ---------------------------------------------- a quién me salió */}
-            <TabsContent value="mi-parcero" className="space-y-5 pt-4">
+            <TabsContent value="mi-amigo" className="space-y-5 pt-4">
               {group.status !== "drawn" ? (
                 <Alert>
                   <Lock className="size-4" aria-hidden />
@@ -156,9 +157,18 @@ export default async function GroupPage({
               ) : (
                 <>
                   <div className="mx-auto max-w-md">
-                    <AssignmentReveal
+                    <AssignmentGate
+                      groupId={group.id}
                       name={displayName(assignment)}
                       avatarUrl={assignment.avatar_url}
+                      alreadyRevealed={assignment.already_revealed}
+                      roster={roster.map((m) => ({
+                        name: m.name,
+                        avatarUrl: m.avatar_url,
+                      }))}
+                      winnerIndex={roster.findIndex(
+                        (m) => m.member_id === assignment.member_id,
+                      )}
                     />
                   </div>
 
@@ -192,7 +202,7 @@ export default async function GroupPage({
               )}
             </TabsContent>
 
-            {/* --------------------------------------------------- el parche */}
+            {/* --------------------------------------------------- el grupo */}
             <TabsContent value="parche" className="space-y-5 pt-4">
               {isAdmin && group.status === "pending" && (
                 <InviteCard
@@ -205,7 +215,7 @@ export default async function GroupPage({
 
               {(endulzadas.length > 0 || group.reveal_at) && (
                 <div className="bg-card space-y-2 rounded-xl border p-4">
-                  <h3 className="text-sm font-semibold">Fechas del parche</h3>
+                  <h3 className="text-sm font-semibold">Fechas del grupo</h3>
                   <ul className="space-y-1.5 text-sm">
                     {endulzadas.map((endulzada, index) => (
                       <li key={endulzada.id} className="flex items-center gap-2">
@@ -217,8 +227,8 @@ export default async function GroupPage({
                         <span className="text-muted-foreground">
                           Endulzada {index + 1}
                         </span>
-                        <span className="ml-auto font-medium">
-                          {formatGroupDate(endulzada.happens_on)}
+                        <span className="ml-auto">
+                          <GroupDate value={endulzada.happens_on} />
                         </span>
                       </li>
                     ))}
@@ -232,8 +242,8 @@ export default async function GroupPage({
                         <span className="text-muted-foreground">
                           Descubrimiento
                         </span>
-                        <span className="ml-auto font-medium">
-                          {formatGroupDate(group.reveal_at)}
+                        <span className="ml-auto">
+                          <GroupDate value={group.reveal_at} />
                         </span>
                       </li>
                     )}
@@ -241,19 +251,13 @@ export default async function GroupPage({
                 </div>
               )}
 
-              {myMember && (
-                <NicknameDialog
-                  groupId={group.id}
-                  memberId={myMember.member_id}
-                  currentNickname={myMember.nickname}
-                  profileName={me.name}
-                />
-              )}
-
               <RosterList
                 groupId={group.id}
                 members={roster}
                 canRemove={isAdmin && group.status === "pending"}
+                canRename={isAdmin}
+                wishlists={Object.fromEntries(visibleWishlists)}
+                drawn={group.status === "drawn"}
               />
 
               {isAdmin ? (

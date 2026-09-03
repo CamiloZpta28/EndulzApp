@@ -10,10 +10,10 @@ export default function NotFound() {
         <SearchX className="text-muted-foreground mx-auto size-8" aria-hidden />
         <h1 className="text-xl font-bold">Por acá no hay nada</h1>
         <p className="text-muted-foreground text-sm">
-          O el parche no existe, o no eres parte de él.
+          O el grupo no existe, o no eres parte de él.
         </p>
         <ButtonLink href="/dashboard" className="w-full">
-          Ir a mis parches
+          Ir a mis grupos
         </ButtonLink>
       </Card>
     </main>

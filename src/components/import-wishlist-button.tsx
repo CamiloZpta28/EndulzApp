@@ -10,7 +10,7 @@ import { importProfileWishlist } from "@/lib/actions/profile";
 import { idle } from "@/lib/actions/types";
 
 /**
- * Trae la lista base del perfil a este parche.
+ * Trae la lista base del perfil a este grupo.
  *
  * Si la lista base está vacía no se ofrece el botón — sería un botón que no
  * hace nada; en su lugar se manda a armarla.
@@ -32,7 +32,7 @@ export function ImportWishlistButton({
       <div className="bg-muted/50 space-y-2 rounded-xl border border-dashed p-3 text-center">
         <p className="text-muted-foreground text-sm">
           Si armas tu lista base en el perfil, la puedes importar a cualquier
-          parche de un toque.
+          grupo de un toque.
         </p>
         <ButtonLink href="/perfil" variant="outline" size="sm">
           Armar mi lista base

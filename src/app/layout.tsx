@@ -7,7 +7,7 @@ import "./globals.css";
 
 /**
  * Baloo 2 para títulos y para el nombre de la app: redonda y con peso, que es
- * la estética que pide un parche de dulces. Antes había una serif (Fraunces)
+ * la estética que pide un grupo de dulces. Antes había una serif (Fraunces)
  * y se sentía de revista, no de app. Plus Jakarta Sans para el cuerpo, donde
  * lo que importa es leer cómodo en pantalla chiquita.
  */
@@ -27,7 +27,7 @@ const baloo = Baloo_2({
 export const metadata: Metadata = {
   title: "EndulzApp — Amigo Secreto",
   description:
-    "Organiza el amigo secreto del parche: participantes, presupuestos, listas de antojos y el sorteo, sin trampas.",
+    "Organiza el amigo secreto del grupo: participantes, presupuestos, listas de antojos y el sorteo, sin trampas.",
   applicationName: "EndulzApp",
 };
 

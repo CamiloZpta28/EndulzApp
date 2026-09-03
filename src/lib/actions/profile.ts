@@ -12,7 +12,7 @@ const AVATAR_BUCKET = "avatars";
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const AVATAR_MIME = new Set(["image/png", "image/jpeg", "image/webp"]);
 
-/** Las fotos de la lista base van al mismo bucket que las de los parches. */
+/** Las fotos de la lista base van al mismo bucket que las de los grupos. */
 const ITEM_BUCKET = "wishlist-images";
 const MAX_ITEM_BYTES = 5 * 1024 * 1024;
 const ITEM_MIME = new Set([
@@ -117,7 +117,7 @@ export async function updateProfile(
 
   if (error) return fail(toMessage(error, "No pudimos guardar tu perfil."));
 
-  // El nombre y la foto salen en el roster de cada parche.
+  // El nombre y la foto salen en el roster de cada grupo.
   revalidatePath("/perfil");
   revalidatePath("/dashboard", "layout");
   return done("Perfil actualizado.");
@@ -288,10 +288,10 @@ export async function deleteProfileItem(
 }
 
 /**
- * Copia la lista base al puesto de un parche.
+ * Copia la lista base al puesto de un grupo.
  *
- * Copia y no enlaza a propósito: así ajustar la lista de un parche no le
- * cambia el regalo a nadie más, y editar la base después no toca los parches
+ * Copia y no enlaza a propósito: así ajustar la lista de un grupo no le
+ * cambia el regalo a nadie más, y editar la base después no toca los grupos
  * que ya están andando. El RPC salta los nombres repetidos.
  */
 export async function importProfileWishlist(
@@ -301,7 +301,7 @@ export async function importProfileWishlist(
   const groupId = String(formData.get("group_id") ?? "");
   const memberId = String(formData.get("member_id") ?? "");
   const type = parseType(formData.get("type"));
-  if (!memberId) return fail("Falta tu puesto en el parche.");
+  if (!memberId) return fail("Falta tu puesto en el grupo.");
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("import_profile_wishlist", {
@@ -314,7 +314,7 @@ export async function importProfileWishlist(
   revalidatePath(`/g/${groupId}`);
 
   if (!data) {
-    return done("Tu lista base ya estaba completa en este parche.");
+    return done("Tu lista base ya estaba completa en este grupo.");
   }
   return done(
     data === 1 ? "Se importó 1 antojo." : `Se importaron ${data} antojos.`,

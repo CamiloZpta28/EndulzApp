@@ -37,7 +37,7 @@ const META: Record<
 
 /**
  * Una sección de la lista base. Sin tope: acá no hay presupuesto porque la
- * lista todavía no pertenece a ningún parche — el tope lo pone cada parche
+ * lista todavía no pertenece a ningún grupo — el tope lo pone cada grupo
  * cuando la importas.
  */
 export function ProfileWishlist({

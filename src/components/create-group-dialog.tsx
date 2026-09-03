@@ -33,14 +33,14 @@ export function CreateGroupDialog() {
         render={
           <Button size="lg" className="w-full">
             <Plus className="size-4" aria-hidden />
-            Crear parche nuevo
+            Crear grupo nuevo
           </Button>
         }
       />
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nuevo parche</DialogTitle>
+          <DialogTitle>Nuevo grupo</DialogTitle>
           <DialogDescription>
             Tú quedas como admin y ya tienes tu puesto en el sorteo.
           </DialogDescription>
@@ -48,7 +48,7 @@ export function CreateGroupDialog() {
 
         <form action={formAction} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nombre del parche</Label>
+            <Label htmlFor="name">Nombre del grupo</Label>
             <Input
               id="name"
               name="name"
@@ -80,7 +80,7 @@ export function CreateGroupDialog() {
 
           <DialogFooter>
             <SubmitButton className="w-full" size="lg" pendingLabel="Creando…">
-              Crear parche
+              Crear grupo
             </SubmitButton>
           </DialogFooter>
         </form>

@@ -40,7 +40,7 @@ export function BudgetBanner({
     <section className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-          Topes del parche
+          Topes del grupo
         </h2>
         {action}
       </div>

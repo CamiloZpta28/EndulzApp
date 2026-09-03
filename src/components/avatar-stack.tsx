@@ -2,10 +2,10 @@ import { PersonAvatar } from "@/components/person-avatar";
 import type { MemberChip } from "@/lib/types";
 
 /**
- * Las caritas del parche, montadas una sobre otra.
+ * Las caritas del grupo, montadas una sobre otra.
  *
  * `my_groups()` trae hasta 6; el resto se resume en un "+N" con el total real,
- * así una tarjeta de un parche de 30 personas sigue midiendo lo mismo.
+ * así una tarjeta de un grupo de 30 personas sigue midiendo lo mismo.
  */
 export function AvatarStack({
   members,

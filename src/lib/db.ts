@@ -55,7 +55,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   return data ?? null;
 }
 
-/** La lista base del perfil, la que se importa a los parches. */
+/** La lista base del perfil, la que se importa a los grupos. */
 export async function getProfileWishlist(): Promise<ProfileWishlistItem[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -139,7 +139,38 @@ export async function getWishlist(memberId: string): Promise<WishlistItem[]> {
   return data ?? [];
 }
 
-/** Las endulzadas agendadas del parche, de la más próxima a la más lejana. */
+/**
+ * Las listas de TODOS los del grupo, en una sola consulta.
+ *
+ * No hace falta filtrar acá: RLS solo devuelve las que uno puede ver — la
+ * propia y la de quien salió. Por eso una sola consulta por el grupo entero
+ * es segura y además evita una por persona; lo que vuelve vacío es
+ * exactamente lo que no se debe ver.
+ */
+export async function getVisibleWishlists(
+  memberIds: string[],
+): Promise<Map<string, WishlistItem[]>> {
+  const byMember = new Map<string, WishlistItem[]>();
+  if (memberIds.length === 0) return byMember;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("wishlists")
+    .select("*")
+    .in("member_id", memberIds)
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("created_at");
+  if (error) throw error;
+
+  for (const item of data ?? []) {
+    const list = byMember.get(item.member_id);
+    if (list) list.push(item);
+    else byMember.set(item.member_id, [item]);
+  }
+  return byMember;
+}
+
+/** Las endulzadas agendadas del grupo, de la más próxima a la más lejana. */
 export async function getEndulzadas(
   groupId: string,
 ): Promise<GroupEndulzada[]> {
@@ -198,6 +229,8 @@ export type GroupPageData = {
   targetItems: WishlistItem[];
   profileItemCount: number;
   endulzadas: GroupEndulzada[];
+  /** Solo las que RLS permite: la propia y la de quien salió. */
+  visibleWishlists: Map<string, WishlistItem[]>;
 };
 
 /** One call for everything `/g/[id]` renders. */
@@ -218,12 +251,20 @@ export async function getGroupPageData(
   const assignment =
     group.status === "drawn" && myMember ? await getMyAssignment(groupId) : null;
 
-  const [myItems, targetItems, profileItems] = await Promise.all([
-    myMember ? getWishlist(myMember.member_id) : Promise.resolve([]),
-    assignment ? getWishlist(assignment.member_id) : Promise.resolve([]),
+  const [visibleWishlists, profileItems] = await Promise.all([
+    getVisibleWishlists(roster.map((m) => m.member_id)),
     // Solo para saber si tiene sentido ofrecer el botón de importar.
     myMember ? getProfileWishlist() : Promise.resolve([]),
   ]);
+
+  // Las dos listas que las pestañas usan salen del mismo mapa: una consulta
+  // en vez de tres.
+  const myItems = myMember
+    ? (visibleWishlists.get(myMember.member_id) ?? [])
+    : [];
+  const targetItems = assignment
+    ? (visibleWishlists.get(assignment.member_id) ?? [])
+    : [];
 
   return {
     group,
@@ -235,5 +276,6 @@ export async function getGroupPageData(
     targetItems,
     profileItemCount: profileItems.length,
     endulzadas,
+    visibleWishlists,
   };
 }

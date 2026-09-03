@@ -10,7 +10,7 @@ import { rotateInviteCode } from "@/lib/actions/members";
 import { idle } from "@/lib/actions/types";
 
 /**
- * El enlace del parche. Es la única forma de entrar: cada persona se agrega a
+ * El enlace del grupo. Es la única forma de entrar: cada persona se agrega a
  * sí misma, así que el admin solo tiene que repartir esto.
  *
  * La URL viene armada desde el servidor (a partir de los headers de la
@@ -57,7 +57,7 @@ export function InviteCard({
       <div className="space-y-1">
         <h3 className="flex items-center gap-2 font-semibold">
           <Link2 className="text-primary size-4" aria-hidden />
-          Enlace del parche
+          Enlace del grupo
         </h3>
         <p className="text-muted-foreground text-sm">
           Mándalo por donde quieras. Quien lo abra crea su cuenta (o entra con

@@ -17,7 +17,7 @@ export default async function ProfilePage() {
     profile?.display_name?.trim() ||
     user.displayName ||
     user.email?.split("@")[0] ||
-    "Parcero";
+    "Amigo";
 
   return (
     <>
@@ -37,8 +37,8 @@ export default async function ProfilePage() {
             <div className="space-y-1">
               <h2 className="text-lg font-semibold">Mi lista base</h2>
               <p className="text-muted-foreground text-sm">
-                Ármala una vez y la importas en cada parche donde estés. Es
-                privada: nadie la ve hasta que la importes a un parche.
+                Ármala una vez y la importas en cada grupo donde estés. Es
+                privada: nadie la ve hasta que la importes a un grupo.
               </p>
             </div>
 

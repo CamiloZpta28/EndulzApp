@@ -13,8 +13,8 @@ import { getJoinDetails, getJoinPreview, getUser } from "@/lib/db";
  * La página del enlace de invitación.
  *
  * Dos estados a propósito:
- *  - Sin sesión: solo el nombre del parche, su emoji y cuántos van. Quien
- *    tiene el código todavía no ha demostrado ser del parche, así que los
+ *  - Sin sesión: solo el nombre del grupo, su emoji y cuántos van. Quien
+ *    tiene el código todavía no ha demostrado ser del grupo, así que los
  *    nombres no se muestran (`get_join_preview` ni los devuelve).
  *  - Con sesión: la confirmación completa, con los integrantes.
  */
@@ -44,7 +44,7 @@ export default async function JoinPage({
             <h1 className="text-xl font-bold">Este enlace no sirve</h1>
             <p className="text-muted-foreground text-sm">
               Puede que esté mal copiado, que el admin lo haya cambiado, o que
-              el parche ya no exista. Pídele que te lo mande otra vez.
+              el grupo ya no exista. Pídele que te lo mande otra vez.
             </p>
             <ButtonLink href="/" variant="outline" className="w-full">
               Ir al inicio
@@ -60,7 +60,7 @@ export default async function JoinPage({
                 </p>
               )}
               <p className="text-muted-foreground text-sm">
-                Te invitaron a este parche
+                Te invitaron a este grupo
               </p>
               <h1 className="text-2xl font-bold">{details.group_name}</h1>
             </div>
@@ -94,7 +94,7 @@ export default async function JoinPage({
               <>
                 <Alert>
                   <AlertDescription>
-                    Ya estás en este parche. No hay nada que confirmar.
+                    Ya estás en este grupo. No hay nada que confirmar.
                   </AlertDescription>
                 </Alert>
                 <ButtonLink
@@ -102,13 +102,13 @@ export default async function JoinPage({
                   size="lg"
                   className="w-full"
                 >
-                  Entrar al parche
+                  Entrar al grupo
                 </ButtonLink>
               </>
             ) : details.status === "drawn" ? (
               <Alert variant="destructive">
                 <AlertDescription>
-                  Este parche ya hizo el sorteo, así que no se puede entrar.
+                  Este grupo ya hizo el sorteo, así que no se puede entrar.
                   Pídele al admin que lo reinicie si te quieren incluir.
                 </AlertDescription>
               </Alert>
@@ -139,7 +139,7 @@ export default async function JoinPage({
             {preview!.status === "drawn" ? (
               <Alert variant="destructive">
                 <AlertDescription>
-                  Este parche ya hizo el sorteo y no admite gente nueva.
+                  Este grupo ya hizo el sorteo y no admite gente nueva.
                 </AlertDescription>
               </Alert>
             ) : (

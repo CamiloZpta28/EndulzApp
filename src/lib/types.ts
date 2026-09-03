@@ -49,7 +49,7 @@ export type Member = {
   created_at: string;
 };
 
-/** Un item de la lista base del perfil, la que se importa a los parches. */
+/** Un item de la lista base del perfil, la que se importa a los grupos. */
 export type ProfileWishlistItem = {
   id: string;
   user_id: string;
@@ -83,6 +83,8 @@ export type Assignment = {
   user_id: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  /** `false` = todavía no ha girado la ruleta. */
+  already_revealed: boolean;
 };
 
 /** Una endulzada agendada. */
@@ -93,11 +95,11 @@ export type GroupEndulzada = {
   created_at: string;
 };
 
-/** `public.group_roster()` — nombres y fotos de quienes están en el parche. */
+/** `public.group_roster()` — nombres y fotos de quienes están en el grupo. */
 export type RosterMember = {
   member_id: string;
   user_id: string | null;
-  /** Ya resuelto: apodo del parche, si no el nombre del perfil. */
+  /** Ya resuelto: apodo del grupo, si no el nombre del perfil. */
   name: string;
   /** El apodo crudo, para precargar el campo. `null` = no tiene. */
   nickname: string | null;
@@ -146,7 +148,7 @@ export type ClaimPreview = {
   status: GroupStatus;
 };
 
-/** Una carita para la tarjeta del parche. */
+/** Una carita para la tarjeta del grupo. */
 export type MemberChip = { name: string; avatar_url: string | null };
 
 /** `public.my_groups()` */
@@ -280,6 +282,7 @@ export type Database = {
       get_join_details: { Args: { p_code: string }; Returns: JoinDetails[] };
       join_group: { Args: { p_code: string }; Returns: string };
       rotate_invite_code: { Args: { p_group: string }; Returns: string };
+      mark_assignment_revealed: { Args: { p_group: string }; Returns: void };
       set_group_endulzadas: {
         Args: { p_group: string; p_dates: string[] };
         Returns: number;

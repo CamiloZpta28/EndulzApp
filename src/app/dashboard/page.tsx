@@ -9,7 +9,7 @@ import { Shell } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getMyGroups, getProfile, requireUser } from "@/lib/db";
-import { formatGroupDate } from "@/lib/format";
+import { GroupDate } from "@/components/group-date";
 
 export default async function DashboardPage() {
   const user = await requireUser("/dashboard");
@@ -19,13 +19,13 @@ export default async function DashboardPage() {
     profile?.display_name?.trim() ||
     user.displayName ||
     user.email?.split("@")[0] ||
-    "parcero";
+    "amigo";
 
   return (
     <>
       <AutoRefresh />
       <AppHeader
-        title="Mis parches"
+        title="Mis grupos"
         subtitle={`Hola, ${name}`}
         me={{ name, avatarUrl: profile?.avatar_url ?? null }}
       />
@@ -35,7 +35,7 @@ export default async function DashboardPage() {
           {groups.length === 0 ? (
             <Card className="mx-auto max-w-md space-y-3 p-6 text-center">
               <Candy className="text-primary mx-auto size-8" aria-hidden />
-              <h2 className="font-semibold">Todavía no tienes ningún parche</h2>
+              <h2 className="font-semibold">Todavía no tienes ningún grupo</h2>
               <p className="text-muted-foreground text-sm">
                 Crea uno y reparte el enlace — cada quien se agrega solo.
               </p>
@@ -43,8 +43,8 @@ export default async function DashboardPage() {
           ) : (
             <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {groups.map((group) => {
-                const endulzada = formatGroupDate(group.next_endulzada);
-                const reveal = formatGroupDate(group.reveal_at);
+                const endulzada = group.next_endulzada;
+                const reveal = group.reveal_at;
 
                 return (
                   <li key={group.id}>
@@ -108,8 +108,8 @@ export default async function DashboardPage() {
                                     </span>
                                   )}
                                 </dt>
-                                <dd className="ml-auto font-medium">
-                                  {endulzada}
+                                <dd className="ml-auto">
+                                  <GroupDate value={endulzada} />
                                 </dd>
                               </div>
                             )}
@@ -123,7 +123,9 @@ export default async function DashboardPage() {
                                 <dt className="text-muted-foreground">
                                   Descubrimiento
                                 </dt>
-                                <dd className="ml-auto font-medium">{reveal}</dd>
+                                <dd className="ml-auto">
+                                  <GroupDate value={reveal} />
+                                </dd>
                               </div>
                             )}
                           </dl>

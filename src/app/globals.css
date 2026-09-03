@@ -161,27 +161,30 @@
 }
 
 .dark {
-  --primary: oklch(0.68 0.19 14);
-  --primary-foreground: oklch(0.16 0.02 20);
-  --ring: oklch(0.68 0.19 14);
+  /* En oscuro el rojo caramelo se veía pesado; el azul cielo respira mejor
+     sobre el fondo tibio y deja el naranja y el violeta de las dos listas
+     bien diferenciados. El texto encima va oscuro porque el azul es claro. */
+  --primary: oklch(0.78 0.13 225);
+  --primary-foreground: oklch(0.2 0.03 240);
+  --ring: oklch(0.78 0.13 225);
   --endulzada: oklch(0.78 0.16 60);
   --endulzada-soft: oklch(0.28 0.06 60);
   --regalo: oklch(0.7 0.14 288);
   --regalo-soft: oklch(0.27 0.06 288);
 
-  /* Oscuro con un tinte cálido, no gris de fábrica. */
-  --background: oklch(0.165 0.012 20);
-  --foreground: oklch(0.97 0.006 40);
-  --card: oklch(0.215 0.014 20);
-  --card-foreground: oklch(0.97 0.006 40);
-  --popover: oklch(0.215 0.014 20);
-  --popover-foreground: oklch(0.97 0.006 40);
-  --secondary: oklch(0.27 0.014 20);
-  --secondary-foreground: oklch(0.97 0.006 40);
-  --muted: oklch(0.27 0.014 20);
-  --muted-foreground: oklch(0.73 0.012 30);
-  --accent: oklch(0.27 0.014 20);
-  --accent-foreground: oklch(0.97 0.006 40);
+  /* Oscuro con un tinte frío suave, para que acompañe al azul. */
+  --background: oklch(0.17 0.014 250);
+  --foreground: oklch(0.97 0.005 240);
+  --card: oklch(0.22 0.016 250);
+  --card-foreground: oklch(0.97 0.005 240);
+  --popover: oklch(0.22 0.016 250);
+  --popover-foreground: oklch(0.97 0.005 240);
+  --secondary: oklch(0.275 0.017 250);
+  --secondary-foreground: oklch(0.97 0.005 240);
+  --muted: oklch(0.275 0.017 250);
+  --muted-foreground: oklch(0.74 0.012 245);
+  --accent: oklch(0.275 0.017 250);
+  --accent-foreground: oklch(0.97 0.005 240);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
 }

@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "EndulzApp — Amigo Secreto",
     short_name: "EndulzApp",
     description:
-      "El amigo secreto del parche: invita con un enlace, pon los topes y sortea sin trampas.",
+      "El amigo secreto del grupo: invita con un enlace, pon los topes y sortea sin trampas.",
     start_url: "/dashboard",
     display: "standalone",
     orientation: "portrait",

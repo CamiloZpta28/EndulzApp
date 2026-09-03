@@ -22,7 +22,7 @@ export default async function LoginPage({
           <Logo markClassName="size-9" />
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">
-          {mode === "signup" ? "Crea tu cuenta" : "Entra a tu parche"}
+          {mode === "signup" ? "Crea tu cuenta" : "Entra a tu grupo"}
         </h1>
       </div>
 

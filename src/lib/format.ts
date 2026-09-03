@@ -35,7 +35,7 @@ export function displayName(member: {
 
 /**
  * Split one wishlist into the two sections the UI renders. Es genérico porque
- * sirve tanto para la lista de un parche como para la lista base del perfil,
+ * sirve tanto para la lista de un grupo como para la lista base del perfil,
  * que tienen columnas distintas pero el mismo `type`.
  */
 export function groupByType<T extends { type: WishlistType }>(items: T[]) {
@@ -45,7 +45,7 @@ export function groupByType<T extends { type: WishlistType }>(items: T[]) {
 }
 
 /**
- * Cumpleaños como "14 de marzo" — sin el año, que no es asunto del parche.
+ * Cumpleaños como "14 de marzo" — sin el año, que no es asunto del grupo.
  * La fecha llega como `YYYY-MM-DD`, así que se fija en UTC: interpretarla en
  * la zona local correría el día hacia atrás en cualquier huso al oeste de
  * Greenwich, Colombia incluida.
@@ -62,9 +62,13 @@ export function formatBirthday(value?: string | null) {
 }
 
 /**
- * Una fecha del parche, corta y con contexto: "hoy", "mañana", "en 5 días" o
- * "12 de dic". Se ancla a mediodía UTC porque la columna es `date`: leerla en
- * la zona local correría el día hacia atrás al oeste de Greenwich.
+ * Una fecha del grupo, en dos piezas: lo relativo ("en 8 días") y lo exacto
+ * ("12 de sep"). Se devuelven aparte para que la UI decida cómo juntarlas —
+ * lo relativo dice si urge, lo exacto sirve para anotarlo en el calendario, y
+ * sin lo segundo hay que hacer la cuenta a mano.
+ *
+ * Se ancla a mediodía UTC porque la columna es `date`: leerla en la zona
+ * local correría el día hacia atrás al oeste de Greenwich.
  */
 export function formatGroupDate(value?: string | null) {
   if (!value) return null;
@@ -80,15 +84,18 @@ export function formatGroupDate(value?: string | null) {
   );
   const days = Math.round((date.getTime() - todayUtc) / 86_400_000);
 
-  if (days === 0) return "hoy";
-  if (days === 1) return "mañana";
-  if (days === -1) return "ayer";
-  if (days > 1 && days <= 14) return `en ${days} días`;
-  if (days < -1) return "ya pasó";
-
-  return new Intl.DateTimeFormat("es-CO", {
+  const absolute = new Intl.DateTimeFormat("es-CO", {
     day: "numeric",
     month: "short",
     timeZone: "UTC",
   }).format(date);
+
+  let relative: string | null = null;
+  if (days === 0) relative = "hoy";
+  else if (days === 1) relative = "mañana";
+  else if (days === -1) relative = "ayer";
+  else if (days > 1 && days <= 30) relative = `en ${days} días`;
+  else if (days < -1) relative = "ya pasó";
+
+  return { relative, absolute, days };
 }

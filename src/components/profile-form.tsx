@@ -136,7 +136,7 @@ export function ProfileForm({
               defaultValue={name}
             />
             <p className="text-muted-foreground text-xs">
-              Este es el nombre que ve tu parche.
+              Este es el nombre que ve tu grupo.
             </p>
           </div>
 
@@ -152,7 +152,7 @@ export function ProfileForm({
               defaultValue={birthday ?? ""}
             />
             <p className="text-muted-foreground text-xs">
-              Tu parche ve el día y el mes, no el año.
+              Tu grupo ve el día y el mes, no el año.
             </p>
           </div>
 
@@ -171,7 +171,7 @@ export function ProfileForm({
               placeholder="300 123 4567"
             />
             <p className="text-muted-foreground text-xs">
-              Privado. No sale en el parche.
+              Privado. No sale en el grupo.
             </p>
           </div>
 

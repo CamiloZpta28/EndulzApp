@@ -46,7 +46,7 @@ export default function ErrorBoundary({
               <TriangleAlert className="text-destructive mx-auto size-8" aria-hidden />
               <h1 className="text-xl font-bold">Algo se nos dañó</h1>
               <p className="text-muted-foreground text-sm">
-                {error.message || "No pudimos cargar esta parte del parche."}
+                {error.message || "No pudimos cargar esta parte del grupo."}
               </p>
             </>
           )}
@@ -56,7 +56,7 @@ export default function ErrorBoundary({
               Intentar otra vez
             </Button>
             <ButtonLink href="/dashboard" variant="outline" className="w-full">
-              Ir a mis parches
+              Ir a mis grupos
             </ButtonLink>
           </div>
         </Card>

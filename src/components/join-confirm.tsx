@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { joinGroup } from "@/lib/actions/members";
 import { idle } from "@/lib/actions/types";
 
-/** Si sale bien, `joinGroup` redirige al parche: no hay estado de éxito. */
+/** Si sale bien, `joinGroup` redirige al grupo: no hay estado de éxito. */
 export function JoinConfirm({
   code,
   groupName,

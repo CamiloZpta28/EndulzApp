@@ -20,9 +20,9 @@ import { updateNickname } from "@/lib/actions/members";
 import { idle } from "@/lib/actions/types";
 
 /**
- * El apodo con el que apareces en este parche.
+ * El apodo con el que apareces en este grupo.
  *
- * Es por parche, no global: en la oficina puedes ser "Camilo" y con los
+ * Es por grupo, no global: en la oficina puedes ser "Camilo" y con los
  * primos "el Mono". Vacío vuelve a mostrar el nombre del perfil.
  */
 export function NicknameDialog({
@@ -30,11 +30,14 @@ export function NicknameDialog({
   memberId,
   currentNickname,
   profileName,
+  forSomeoneElse = false,
 }: {
   groupId: string;
   memberId: string;
   currentNickname: string | null;
   profileName: string;
+  /** El admin poniéndole apodo a alguien más cambia solo los textos. */
+  forSomeoneElse?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState(updateNickname, idle);
@@ -47,17 +50,28 @@ export function NicknameDialog({
         render={
           <Button variant="outline" size="sm">
             <IdCard className="size-3.5" aria-hidden />
-            {currentNickname ? "Cambiar mi apodo" : "Ponerme un apodo"}
+            {forSomeoneElse
+              ? currentNickname
+                ? "Cambiar su apodo"
+                : "Ponerle un apodo"
+              : currentNickname
+                ? "Cambiar mi apodo"
+                : "Ponerme un apodo"}
           </Button>
         }
       />
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Mi apodo en este parche</DialogTitle>
+          <DialogTitle>
+            {forSomeoneElse
+              ? `Apodo de ${profileName} en este grupo`
+              : "Mi apodo en este grupo"}
+          </DialogTitle>
           <DialogDescription>
-            Solo aplica acá. En tus otros parches sigues apareciendo como
-            siempre.
+            {forSomeoneElse
+              ? "Solo aplica en este grupo. En sus otros grupos sigue apareciendo con su nombre."
+              : "Solo aplica acá. En tus otros grupos sigues apareciendo como siempre."}
           </DialogDescription>
         </DialogHeader>
 
@@ -76,7 +90,7 @@ export function NicknameDialog({
               autoComplete="off"
             />
             <p className="text-muted-foreground text-xs">
-              Déjalo vacío para volver a aparecer como{" "}
+              Déjalo vacío para volver al nombre de{" "}
               <strong className="text-foreground">{profileName}</strong>.
             </p>
           </div>

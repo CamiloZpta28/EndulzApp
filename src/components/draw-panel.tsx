@@ -64,7 +64,7 @@ export function DrawPanel({
         </Alert>
       ) : (
         <p className="text-muted-foreground text-sm">
-          Al sortear, cada uno de los {memberCount} parceros recibe a otro
+          Al sortear, cada uno de los {memberCount} amigos recibe a otro
           distinto. Nadie se saca a sí mismo, y ni tú como admin puedes ver los
           emparejamientos.
         </p>

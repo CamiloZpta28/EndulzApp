@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 /**
  * Cuántas endulzadas van a haber y cuándo.
  *
- * Una lista de fechas y no "cada N semanas": los parches reales las mueven
+ * Una lista de fechas y no "cada N semanas": los grupos reales las mueven
  * (el puente, el cierre de mes, la semana que nadie va a la oficina), así que
  * una regla automática habría que corregirla a mano de todas formas.
  *
@@ -96,7 +96,7 @@ export function EndulzadaSchedule({
       </Button>
 
       <p className="text-muted-foreground text-xs">
-        En la tarjeta del parche se ve la próxima que no haya pasado.
+        En la tarjeta del grupo se ve la próxima que no haya pasado.
       </p>
     </div>
   );

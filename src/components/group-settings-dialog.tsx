@@ -26,7 +26,7 @@ import type { Group } from "@/lib/types";
 
 /**
  * `variant` decide cómo se abre:
- *  - `"full"`: el botón ancho de la pestaña Parche.
+ *  - `"full"`: el botón ancho de la pestaña Grupo.
  *  - `"compact"`: el lápiz que va junto a los topes, arriba, que es donde
  *    uno los está leyendo cuando decide cambiarlos.
  * El contenido del diálogo es el mismo en los dos casos.
@@ -56,12 +56,12 @@ export function GroupSettingsDialog({
           variant === "compact" ? (
             <Button variant="ghost" size="sm">
               <Pencil className="size-3.5" aria-hidden />
-              Editar el parche
+              Editar el grupo
             </Button>
           ) : (
             <Button variant="outline" className="w-full">
               <Settings2 className="size-4" aria-hidden />
-              Ajustes del parche
+              Ajustes del grupo
             </Button>
           )
         }
@@ -69,7 +69,7 @@ export function GroupSettingsDialog({
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Ajustes del parche</DialogTitle>
+          <DialogTitle>Ajustes del grupo</DialogTitle>
           <DialogDescription>
             El nombre, el emoji y los topes se pueden cambiar cuando quieras,
             incluso después del sorteo.
@@ -124,7 +124,7 @@ export function GroupSettingsDialog({
           <form action={deleteAction} className="space-y-2">
             <input type="hidden" name="group_id" value={group.id} />
             <p className="text-sm">
-              Se borra el parche completo: participantes, listas y el sorteo.
+              Se borra el grupo completo: participantes, listas y el sorteo.
               Esto no se puede deshacer.
             </p>
             <div className="flex gap-2">
@@ -152,7 +152,7 @@ export function GroupSettingsDialog({
             onClick={() => setConfirmingDelete(true)}
           >
             <Trash2 className="size-4" aria-hidden />
-            Borrar el parche
+            Borrar el grupo
           </Button>
         )}
       </DialogContent>

@@ -9,16 +9,17 @@ import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/auth";
 
 /**
- * La barra de arriba.
+ * La barra de arriba: una sola fila, con el bloque de identidad centrado.
  *
- * Dos filas a propósito: arriba los controles (volver, tema, perfil, salir) y
- * abajo el título grande. Con todo en una sola fila el título competía con
- * cinco botones y quedaba del tamaño de un texto normal — de ahí la sensación
- * de encabezado plano.
+ * El bloque de identidad va centrado respecto a la PANTALLA, no al espacio
+ * que le sobra entre los botones: los laterales se sacan del flujo con
+ * `absolute` y el centro se centra solo. Con laterales en el flujo el título
+ * se corría según cuántos controles tuviera cada pantalla (el dashboard no
+ * tiene botón de volver, el grupo sí).
  *
  * Va sobre el color de marca, y los controles llevan su propio `text-white`
- * porque este es el único bloque de la app que no cambia entre claro y
- * oscuro: es el punto de referencia fijo.
+ * porque este es el único bloque que no cambia entre claro y oscuro: es el
+ * punto de referencia fijo.
  */
 export function AppHeader({
   title,
@@ -42,25 +43,49 @@ export function AppHeader({
           "linear-gradient(150deg, color-mix(in oklch, var(--primary), #fff 8%) 0%, var(--primary) 45%, color-mix(in oklch, var(--primary), #000 30%) 100%)",
       }}
     >
-      <Shell width="wide" className="pt-3 pb-4">
-        {/* fila de controles */}
-        <div className="flex items-center gap-1">
-          {backHref ? (
+      <Shell width="wide" className="relative flex items-center justify-center py-2.5">
+        {/* izquierda */}
+        {backHref && (
+          <div className="absolute left-4 flex items-center md:left-6">
             <ButtonLink
               href={backHref}
               aria-label="Volver"
               variant="ghost"
               size="icon"
-              className="-ml-2 shrink-0 text-white hover:bg-white/15 hover:text-white"
+              className="-ml-2 text-white hover:bg-white/15 hover:text-white"
             >
               <ArrowLeft className="size-5" />
             </ButtonLink>
+          </div>
+        )}
+
+        {/* centro: la paleta a la izquierda del nombre.
+            El ancho máximo deja libres los laterales para que el título se
+            recorte en vez de meterse debajo de los botones. */}
+        <div className="flex min-w-0 max-w-[calc(100%-9rem)] items-center gap-2.5 sm:max-w-[calc(100%-14rem)]">
+          {emoji ? (
+            <span
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-xl leading-none"
+              aria-hidden
+            >
+              {emoji}
+            </span>
           ) : (
-            <LogoMark variant="onBrand" className="size-8 shrink-0 drop-shadow-sm" />
+            <LogoMark variant="onBrand" className="size-9 shrink-0 drop-shadow-sm" />
           )}
 
-          <span className="flex-1" />
+          <div className="min-w-0">
+            <h1 className="font-heading truncate text-xl leading-tight font-extrabold tracking-tight sm:text-2xl">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="truncate text-xs text-white/80">{subtitle}</p>
+            )}
+          </div>
+        </div>
 
+        {/* derecha */}
+        <div className="absolute right-4 flex items-center md:right-6">
           <ThemeToggle className="text-white hover:bg-white/15 hover:text-white" />
 
           {me && (
@@ -69,7 +94,7 @@ export function AppHeader({
               aria-label="Mi perfil"
               variant="ghost"
               size="icon"
-              className="shrink-0 text-white hover:bg-white/15 hover:text-white"
+              className="text-white hover:bg-white/15 hover:text-white"
             >
               <PersonAvatar
                 name={me.name}
@@ -85,33 +110,12 @@ export function AppHeader({
               type="submit"
               variant="ghost"
               size="icon"
-              className="shrink-0 text-white hover:bg-white/15 hover:text-white"
+              className="text-white hover:bg-white/15 hover:text-white"
               aria-label="Cerrar sesión"
             >
               <LogOut className="size-5" />
             </Button>
           </form>
-        </div>
-
-        {/* fila del título */}
-        <div className="mt-1 flex items-center gap-3">
-          {emoji && (
-            <span
-              className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-2xl leading-none shadow-sm md:size-14 md:text-3xl"
-              aria-hidden
-            >
-              {emoji}
-            </span>
-          )}
-
-          <div className="min-w-0 flex-1">
-            <h1 className="font-heading truncate text-2xl leading-tight font-extrabold tracking-tight md:text-3xl">
-              {title}
-            </h1>
-            {subtitle && (
-              <p className="truncate text-sm text-white/80">{subtitle}</p>
-            )}
-          </div>
         </div>
       </Shell>
     </header>

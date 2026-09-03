@@ -10,7 +10,7 @@ const STEPS = [
   {
     icon: Link2,
     title: "Reparte un enlace",
-    body: "Uno solo, para todo el parche. Cada quien entra, confirma y queda en la lista. No tienes que escribir a nadie a mano.",
+    body: "Uno solo, para todo el grupo. Cada quien entra, confirma y queda en la lista. No tienes que escribir a nadie a mano.",
     color: "var(--primary)",
   },
   {
@@ -61,7 +61,7 @@ export default async function Home() {
             </div>
 
             <h1 className="text-4xl leading-[1.05] font-bold tracking-tight md:text-6xl">
-              El amigo secreto del parche,{" "}
+              El amigo secreto del grupo,{" "}
               <span className="relative inline-block">
                 <span className="relative z-10">bien organizado</span>
                 {/* Subrayado a mano alzada, no un rectángulo. */}
@@ -92,7 +92,7 @@ export default async function Home() {
             <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
               <ButtonLink href="/login?mode=signup" size="lg" className="sm:px-8">
                 <Gift className="size-4" aria-hidden />
-                Crear mi parche
+                Crear mi grupo
               </ButtonLink>
               <ButtonLink href="/login" variant="outline" size="lg" className="sm:px-8">
                 Ya tengo cuenta

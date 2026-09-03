@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
  *
  * Sin librería de emojis: un paquete completo pesa cientos de kilobytes y
  * traería un buscador que acá no hace falta. Estos son los que le sirven a un
- * parche, y el campo libre acepta cualquier otro que la persona pegue.
+ * grupo, y el campo libre acepta cualquier otro que la persona pegue.
  */
 const SUGGESTED = [
   "🎁", "🍬", "🎄", "🍭", "🧁", "🎉", "🍫", "⭐",
@@ -30,7 +30,7 @@ export function EmojiPicker({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={`${name}-libre`}>Emoji del parche</Label>
+      <Label htmlFor={`${name}-libre`}>Emoji del grupo</Label>
 
       <div className="flex flex-wrap gap-1">
         {SUGGESTED.map((emoji) => {
