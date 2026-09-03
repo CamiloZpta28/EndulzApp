@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { TriangleAlert } from "lucide-react";
 
+import { ButtonLink } from "@/components/button-link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -25,13 +25,9 @@ export default function ErrorBoundary({
           <Button className="w-full" onClick={reset}>
             Intentar otra vez
           </Button>
-          <Button
-            render={<Link href="/dashboard" />}
-            variant="outline"
-            className="w-full"
-          >
+          <ButtonLink href="/dashboard" variant="outline" className="w-full">
             Ir a mis parches
-          </Button>
+          </ButtonLink>
         </div>
       </Card>
     </main>

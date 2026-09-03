@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Candy, Gift, Shuffle } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/button-link";
 import { getUser } from "@/lib/db";
 
 const STEPS = [
@@ -57,21 +56,12 @@ export default async function Home() {
       </ul>
 
       <div className="space-y-3">
-        <Button
-          render={<Link href="/login?mode=signup" />}
-          size="lg"
-          className="w-full"
-        >
+        <ButtonLink href="/login?mode=signup" size="lg" className="w-full">
           Crear mi grupo
-        </Button>
-        <Button
-          render={<Link href="/login" />}
-          variant="outline"
-          size="lg"
-          className="w-full"
-        >
+        </ButtonLink>
+        <ButtonLink href="/login" variant="outline" size="lg" className="w-full">
           Ya tengo cuenta
-        </Button>
+        </ButtonLink>
       </div>
     </main>
   );

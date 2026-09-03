@@ -536,17 +536,20 @@ set search_path = public, pg_temp as $fn$
 $fn$;
 
 -- ----------------------------------------------------------------------------
--- 7. Function grants — pin EXECUTE down explicitly
+-- 7. Function grants — pin EXECUTE down explicitly.
+--    Postgres grants EXECUTE to PUBLIC on every new function, and `anon` and
+--    `authenticated` inherit it from there. Revoking from those two roles by
+--    name leaves the PUBLIC grant untouched, so the revoke has to name PUBLIC.
 -- ----------------------------------------------------------------------------
-revoke execute on function public.get_my_assignment(uuid)  from anon, authenticated;
-revoke execute on function public.admin_group_members(uuid) from anon, authenticated;
-revoke execute on function public.get_claim_preview(uuid)   from anon, authenticated;
-revoke execute on function public.claim_member(uuid)        from anon, authenticated;
+revoke execute on function public.get_my_assignment(uuid)  from public;
+revoke execute on function public.admin_group_members(uuid) from public;
+revoke execute on function public.get_claim_preview(uuid)   from public;
+revoke execute on function public.claim_member(uuid)        from public;
 revoke execute on function public.create_group(text, numeric, numeric, text, text)
-  from anon, authenticated;
-revoke execute on function public.perform_draw(uuid)        from anon, authenticated;
-revoke execute on function public.reset_draw(uuid)          from anon, authenticated;
-revoke execute on function public.my_groups()               from anon, authenticated;
+  from public;
+revoke execute on function public.perform_draw(uuid)        from public;
+revoke execute on function public.reset_draw(uuid)          from public;
+revoke execute on function public.my_groups()               from public;
 
 grant execute on function public.get_my_assignment(uuid)   to authenticated;
 grant execute on function public.admin_group_members(uuid) to authenticated;
@@ -559,11 +562,13 @@ grant execute on function public.my_groups()               to authenticated;
 -- the invite preview is the only thing an anonymous visitor may call
 grant execute on function public.get_claim_preview(uuid)   to anon, authenticated;
 
--- The RLS helpers are internal; nothing client-side needs to call them.
-revoke execute on function public.is_group_member(uuid)   from anon, authenticated;
-revoke execute on function public.is_group_admin(uuid)    from anon, authenticated;
-revoke execute on function public.is_my_member(uuid)      from anon, authenticated;
-revoke execute on function public.can_read_wishlist(uuid) from anon, authenticated;
+-- Internal only: the trigger function and the RLS helpers.
+revoke execute on function public.handle_new_user() from public;
+
+revoke execute on function public.is_group_member(uuid)   from public;
+revoke execute on function public.is_group_admin(uuid)    from public;
+revoke execute on function public.is_my_member(uuid)      from public;
+revoke execute on function public.can_read_wishlist(uuid) from public;
 
 -- ----------------------------------------------------------------------------
 -- 8. Storage — wishlist item images

@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { Candy } from "lucide-react";
 
 import { ClaimForm } from "@/components/claim-form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/button-link";
 import { Card } from "@/components/ui/card";
 import { getClaimPreview, getUser } from "@/lib/db";
 
@@ -39,9 +38,9 @@ export default async function ClaimPage({
             Puede que esté mal copiado o que el parche ya no exista. Pídele al
             admin que te lo mande otra vez.
           </p>
-          <Button render={<Link href="/" />} variant="outline" className="w-full">
+          <ButtonLink href="/" variant="outline" className="w-full">
             Ir al inicio
-          </Button>
+          </ButtonLink>
         </Card>
       ) : (
         <Card className="space-y-4 p-6">
@@ -71,29 +70,21 @@ export default async function ClaimPage({
             <ClaimForm token={token} claimed={preview.claimed} />
           ) : (
             <div className="space-y-2">
-              <Button
-                render={
-                  <Link
-                    href={`/login?mode=signup&next=${encodeURIComponent(`/claim/${token}`)}`}
-                  />
-                }
+              <ButtonLink
+                href={`/login?mode=signup&next=${encodeURIComponent(`/claim/${token}`)}`}
                 size="lg"
                 className="w-full"
               >
                 Crear cuenta y entrar
-              </Button>
-              <Button
-                render={
-                  <Link
-                    href={`/login?next=${encodeURIComponent(`/claim/${token}`)}`}
-                  />
-                }
+              </ButtonLink>
+              <ButtonLink
+                href={`/login?next=${encodeURIComponent(`/claim/${token}`)}`}
                 variant="outline"
                 size="lg"
                 className="w-full"
               >
                 Ya tengo cuenta
-              </Button>
+              </ButtonLink>
             </div>
           )}
         </Card>

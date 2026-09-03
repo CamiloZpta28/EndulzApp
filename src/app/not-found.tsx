@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { SearchX } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/button-link";
 import { Card } from "@/components/ui/card";
 
 export default function NotFound() {
@@ -13,9 +12,9 @@ export default function NotFound() {
         <p className="text-muted-foreground text-sm">
           O el parche no existe, o no eres parte de él.
         </p>
-        <Button render={<Link href="/dashboard" />} className="w-full">
+        <ButtonLink href="/dashboard" className="w-full">
           Ir a mis parches
-        </Button>
+        </ButtonLink>
       </Card>
     </main>
   );

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { ArrowLeft, LogOut } from "lucide-react";
 
+import { ButtonLink } from "@/components/button-link";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/auth";
 
@@ -17,14 +17,15 @@ export function AppHeader({
     <header className="bg-background/85 sticky top-0 z-10 border-b backdrop-blur">
       <div className="mx-auto flex w-full max-w-md items-center gap-3 px-4 py-3">
         {backHref && (
-          <Button
-            render={<Link href={backHref} aria-label="Volver" />}
+          <ButtonLink
+            href={backHref}
+            aria-label="Volver"
             variant="ghost"
             size="icon"
             className="-ml-2 shrink-0"
           >
             <ArrowLeft className="size-5" />
-          </Button>
+          </ButtonLink>
         )}
 
         <div className="min-w-0 flex-1">
