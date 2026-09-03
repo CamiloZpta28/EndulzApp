@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/app-header";
+import { NotificationsToggle } from "@/components/notifications-toggle";
 import { ProfileForm } from "@/components/profile-form";
 import { ProfileWishlist } from "@/components/profile-wishlist";
 import { Shell } from "@/components/shell";
@@ -32,6 +33,17 @@ export default async function ProfilePage() {
             birthday={profile?.birthday ?? null}
             phone={profile?.phone ?? null}
           />
+
+          <section className="space-y-3">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">Recordatorios</h2>
+              <p className="text-muted-foreground text-sm">
+                Un aviso antes de cada endulzada y del descubrimiento, para que
+                no te coja la fecha sin comprar.
+              </p>
+            </div>
+            <NotificationsToggle />
+          </section>
 
           <section className="space-y-3">
             <div className="space-y-1">

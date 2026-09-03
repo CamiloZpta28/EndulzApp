@@ -47,8 +47,10 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Everything except static assets and image files.
+     * Todo menos los estáticos, las imágenes y las rutas de metadatos
+     * (`/icon`, `/apple-icon`, el manifest). Esas últimas no llevan sesión,
+     * así que revisarla ahí era trabajo perdido en cada carga.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

@@ -153,6 +153,31 @@ export type ClaimPreview = {
   status: GroupStatus;
 };
 
+/** Un dispositivo suscrito a recordatorios. */
+export type PushSubscriptionRow = {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string | null;
+  created_at: string;
+};
+
+/** `public.pending_reminders()` — lo que el cron tiene que mandar hoy. */
+export type PendingReminder = {
+  group_id: string;
+  group_name: string;
+  emoji: string | null;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  kind: string;
+  target_date: string;
+  days_before: number;
+};
+
 /** Una carita para la tarjeta del grupo. */
 export type MemberChip = { name: string; avatar_url: string | null };
 
@@ -216,6 +241,18 @@ export type Database = {
         Row: Member;
         Insert: { group_id: string; shadow_name: string };
         Update: { shadow_name?: string; nickname?: string | null };
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: PushSubscriptionRow;
+        Insert: {
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent?: string | null;
+        };
+        Update: { user_agent?: string | null };
         Relationships: [];
       };
       group_endulzadas: {
@@ -288,6 +325,21 @@ export type Database = {
       join_group: { Args: { p_code: string }; Returns: string };
       rotate_invite_code: { Args: { p_group: string }; Returns: string };
       mark_assignment_revealed: { Args: { p_group: string }; Returns: void };
+      pending_reminders: {
+        Args: { p_today?: string | null };
+        Returns: PendingReminder[];
+      };
+      mark_reminder_sent: {
+        Args: {
+          p_group: string;
+          p_user: string;
+          p_kind: string;
+          p_target_date: string;
+          p_days_before: number;
+        };
+        Returns: void;
+      };
+      drop_push_subscription: { Args: { p_endpoint: string }; Returns: void };
       set_group_endulzadas: {
         Args: { p_group: string; p_dates: string[] };
         Returns: number;

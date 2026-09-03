@@ -114,3 +114,50 @@ Dos detalles que valen la pena:
 - **shadcn en estilo `base-nova` corre sobre Base UI, no Radix.** No hay
   `asChild`, es `render={...}`, y un `Button` que rinde un `<a>` necesita
   `nativeButton={false}` (de ahí `ButtonLink`).
+
+## Recordatorios por notificación
+
+Opcional: sin configurarlo la app funciona igual, solo que el interruptor del
+perfil no sirve y el cron responde diciendo qué variable falta.
+
+1. **Genera las llaves VAPID** y guárdalas en Vercel:
+
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+
+   La pública va como `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (el navegador la necesita
+   para suscribirse); la privada como `VAPID_PRIVATE_KEY`.
+
+2. **`CRON_SECRET`** — cualquier cadena aleatoria (`openssl rand -hex 24`).
+   Protege `/api/cron/reminders`; en Vercel, definirla hace que Cron la mande
+   sola en el header `Authorization`.
+
+3. **`SUPABASE_SERVICE_ROLE_KEY`** — Project Settings → API. Salta RLS por
+   completo y solo la usa el cron, que necesita ver los dispositivos de todos
+   para avisarles.
+
+4. El horario vive en `vercel.json`: `0 13 * * *` = 8:00 a.m. en Colombia. En
+   plan Hobby los crons corren una vez al día, que es justo lo que hace falta.
+
+### Cómo funciona
+
+- Se avisa **3 días antes y el mismo día** de cada endulzada, y del
+  descubrimiento.
+- `public.pending_reminders()` calcula a quién y cuándo en una sola consulta;
+  cada envío queda anotado en `reminder_log` y la consulta descarta lo ya
+  anotado. Por eso el cron es **idempotente**: un reintento de Vercel no
+  duplica avisos.
+- Una suscripción que responde 404/410 se borra sola; si no, el cron la
+  reintentaría todos los días para siempre.
+
+### Los límites que hay que conocer
+
+- **En iPhone el push solo funciona si la app está instalada** en la pantalla
+  de inicio (Safari 16.4+). El interruptor lo detecta y explica cómo hacerlo,
+  en vez de fallar sin decir nada.
+- Se activa **por dispositivo**, no por cuenta: el celular y el computador se
+  suscriben aparte.
+- Para quien no instale la app hay **`/g/[id]/calendario`**, que baja un `.ics`
+  con las fechas y sus alarmas. El calendario del teléfono avisa sin permisos,
+  sin app y sin depender de que este servidor esté arriba.

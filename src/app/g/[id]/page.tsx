@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { Candy, Lock, Sparkles, Users } from "lucide-react";
+import { CalendarPlus, Candy, Lock, Sparkles, Users } from "lucide-react";
 
 import { AppHeader } from "@/components/app-header";
+import { ButtonLink } from "@/components/button-link";
 import { AssignmentGate } from "@/components/assignment-gate";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BudgetBanner } from "@/components/budget-banner";
@@ -237,6 +238,19 @@ export default async function GroupPage({
                       </li>
                     )}
                   </ul>
+
+                  {/* El calendario del telefono avisa aunque no haya push:
+                      sin permisos, sin app instalada y sin depender de que
+                      este servidor este arriba. */}
+                  <ButtonLink
+                    href={`/g/${group.id}/calendario`}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    <CalendarPlus className="size-3.5" aria-hidden />
+                    Agregar al calendario
+                  </ButtonLink>
                 </div>
               )}
 
