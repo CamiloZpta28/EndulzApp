@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import { getSessionUser } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-import type { Database, WishlistType } from "@/lib/types";
+import { parseHttpUrl, removeUploaded, uploadImage } from "@/lib/upload";
+import type { WishlistType } from "@/lib/types";
 import { type ActionState, done, fail, toMessage } from "./types";
 
 const BUCKET = "wishlist-images";
@@ -22,50 +22,43 @@ function parseType(value: FormDataEntryValue | null): WishlistType | null {
   return type === "endulzada" || type === "regalo" ? type : null;
 }
 
-/** Only http(s) links, so a wishlist can't smuggle a `javascript:` URL. */
-function parseUrl(value: FormDataEntryValue | null) {
-  const raw = String(value ?? "").trim();
-  if (!raw) return null;
-  const candidate = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-  try {
-    const parsed = new URL(candidate);
-    return parsed.protocol === "http:" || parsed.protocol === "https:"
-      ? parsed.toString()
-      : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
- * Upload to Storage under `<user id>/…`, which is exactly what the bucket
- * policy checks. Returns the public URL, or an error string.
+ * La foto puede llegar de tres formas: archivo escogido, imagen pegada del
+ * portapapeles (que también llega como archivo), o una dirección de internet.
+ * El archivo manda sobre la dirección.
+ *
+ * Devuelve `undefined` cuando no hay nada que cambiar, para poder distinguir
+ * "no tocaron la foto" de "la quitaron" (`null`).
  */
-async function uploadImage(
-  supabase: SupabaseClient<Database>,
+async function resolveImage(
+  supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
-  file: File,
-): Promise<{ url: string } | { error: string }> {
-  if (file.size > MAX_IMAGE_BYTES) {
-    return { error: "La imagen no puede pasar de 5 MB." };
+  formData: FormData,
+): Promise<{ value: string | null | undefined } | { error: string }> {
+  const file = formData.get("image");
+  if (file instanceof File && file.size > 0) {
+    const result = await uploadImage(supabase, {
+      bucket: BUCKET,
+      userId,
+      file,
+      maxBytes: MAX_IMAGE_BYTES,
+      allowed: ALLOWED_MIME,
+      label: "La imagen",
+    });
+    if ("error" in result) return { error: result.error };
+    return { value: result.url };
   }
-  if (!ALLOWED_MIME.has(file.type)) {
-    return { error: "Solo aceptamos PNG, JPG, WEBP o GIF." };
-  }
 
-  const extension = file.name.split(".").pop()?.toLowerCase().slice(0, 5) ?? "jpg";
-  const path = `${userId}/${crypto.randomUUID()}.${extension}`;
+  const raw = formData.get("image_url");
+  // El campo ni vino en el formulario: no se toca la foto que ya tenía.
+  if (raw === null) return { value: undefined };
 
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false });
+  const text = String(raw).trim();
+  if (!text) return { value: null };
 
-  if (error) return { error: toMessage(error, "No pudimos subir la imagen.") };
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return { url: publicUrl };
+  const url = parseHttpUrl(text);
+  if (!url) return { error: "Esa dirección de imagen no parece válida." };
+  return { value: url };
 }
 
 export async function addWishlistItem(
@@ -81,26 +74,19 @@ export async function addWishlistItem(
   if (!itemName) return fail("¿Qué es lo que quieres? Escríbelo.");
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) return fail("Inicia sesión para editar tu lista.");
 
-  let imageUrl: string | null = null;
-  const file = formData.get("image");
-  if (file instanceof File && file.size > 0) {
-    const result = await uploadImage(supabase, user.id, file);
-    if ("error" in result) return fail(result.error);
-    imageUrl = result.url;
-  }
+  const image = await resolveImage(supabase, user.id, formData);
+  if ("error" in image) return fail(image.error);
 
   const { error } = await supabase.from("wishlists").insert({
     member_id: memberId,
     type,
     item_name: itemName,
-    url: parseUrl(formData.get("url")),
+    url: parseHttpUrl(formData.get("url")),
     note: String(formData.get("note") ?? "").trim() || null,
-    image_url: imageUrl,
+    image_url: image.value ?? null,
   });
 
   if (error) return fail(toMessage(error, "No pudimos guardar el antojo."));
@@ -121,16 +107,40 @@ export async function updateWishlistItem(
   if (!itemName) return fail("El nombre no puede quedar vacío.");
 
   const supabase = await createClient();
+  const user = await getSessionUser(supabase);
+  if (!user) return fail("Inicia sesión para editar tu lista.");
+
+  const image = await resolveImage(supabase, user.id, formData);
+  if ("error" in image) return fail(image.error);
+
+  const { data: before } = await supabase
+    .from("wishlists")
+    .select("image_url")
+    .eq("id", itemId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("wishlists")
     .update({
       item_name: itemName,
-      url: parseUrl(formData.get("url")),
+      url: parseHttpUrl(formData.get("url")),
       note: String(formData.get("note") ?? "").trim() || null,
+      // `undefined` deja la columna como estaba.
+      ...(image.value === undefined ? {} : { image_url: image.value }),
     })
     .eq("id", itemId);
 
   if (error) return fail(toMessage(error, "No pudimos actualizar el antojo."));
+
+  // La foto vieja se borra solo si de verdad cambió, para no dejar basura en
+  // Storage — ni borrar la que se sigue usando.
+  if (
+    image.value !== undefined &&
+    before?.image_url &&
+    before.image_url !== image.value
+  ) {
+    await removeUploaded(supabase, BUCKET, before.image_url);
+  }
 
   revalidatePath(`/g/${groupId}`);
   return done("Antojo actualizado.");
@@ -146,7 +156,7 @@ export async function deleteWishlistItem(
 
   const supabase = await createClient();
 
-  // Grab the stored path first so the object doesn't outlive the row.
+  // Se lee la ruta antes de borrar la fila, si no queda el objeto huérfano.
   const { data: item } = await supabase
     .from("wishlists")
     .select("image_url")
@@ -156,14 +166,7 @@ export async function deleteWishlistItem(
   const { error } = await supabase.from("wishlists").delete().eq("id", itemId);
   if (error) return fail(toMessage(error, "No pudimos borrar el antojo."));
 
-  if (item?.image_url) {
-    const marker = `/${BUCKET}/`;
-    const index = item.image_url.indexOf(marker);
-    if (index !== -1) {
-      const path = item.image_url.slice(index + marker.length);
-      await supabase.storage.from(BUCKET).remove([decodeURIComponent(path)]);
-    }
-  }
+  await removeUploaded(supabase, BUCKET, item?.image_url ?? null);
 
   revalidatePath(`/g/${groupId}`);
   return done("Antojo eliminado.");

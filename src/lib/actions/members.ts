@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { getSessionUser } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { type ActionState, done, fail, toMessage } from "./types";
 
@@ -20,9 +21,7 @@ export async function joinGroup(
   if (!code) return fail("Falta el código de invitación.");
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect(`/login?next=${encodeURIComponent(`/join/${code}`)}`);
 
   const { error } = await supabase.rpc("join_group", { p_code: code });

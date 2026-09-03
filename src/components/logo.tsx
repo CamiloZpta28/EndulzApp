@@ -1,11 +1,12 @@
 import { cn } from "@/lib/utils";
 
 /**
- * El logo: un caramelo de envoltura retorcida.
+ * El logo: una cajita de regalo con el moño hecho de dos caramelos.
  *
- * El cuerpo va en `--primary` y las dos alitas toman los acentos de las dos
- * listas (`--endulzada` y `--regalo`), así el logo mismo cuenta que el parche
- * tiene dos regalos. Legible desde 20px: nada más fino que 1.5 de trazo.
+ * Junta las dos mitades de la app en una sola figura — la caja es el regalo
+ * grande, los caramelos del moño son la endulzada — y usa los tres colores de
+ * marca. Formas macizas y nada por debajo de 2px de grosor, para que aguante
+ * a 16px en la pestaña del navegador.
  */
 export function LogoMark({ className }: { className?: string }) {
   return (
@@ -15,27 +16,32 @@ export function LogoMark({ className }: { className?: string }) {
       aria-label="EndulzApp"
       className={cn("size-8", className)}
     >
-      {/* alita izquierda */}
-      <path
-        d="M13.5 24 6 16.5c-.9-.9-2.5-.3-2.5 1v13c0 1.3 1.6 1.9 2.5 1L13.5 24Z"
-        fill="var(--endulzada)"
+      {/* cuerpo de la caja */}
+      <rect x="7" y="20" width="34" height="21" rx="5" fill="var(--primary)" />
+      {/* cinta vertical */}
+      <rect
+        x="21.5"
+        y="20"
+        width="5"
+        height="21"
+        fill="var(--primary-foreground)"
+        opacity=".85"
       />
-      {/* alita derecha */}
-      <path
-        d="M34.5 24 42 16.5c.9-.9 2.5-.3 2.5 1v13c0 1.3-1.6 1.9-2.5 1L34.5 24Z"
-        fill="var(--regalo)"
+      {/* tapa */}
+      <rect x="5" y="16" width="38" height="8" rx="3" fill="var(--primary)" />
+      <rect
+        x="21.5"
+        y="16"
+        width="5"
+        height="8"
+        fill="var(--primary-foreground)"
+        opacity=".85"
       />
-      {/* cuerpo */}
-      <circle cx="24" cy="24" r="11.5" fill="var(--primary)" />
-      {/* brillo: el reflejo del celofán */}
-      <path
-        d="M18.5 18.5c1.6-1.7 4-2.7 6.2-2.6"
-        stroke="var(--primary-foreground)"
-        strokeOpacity=".75"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        fill="none"
-      />
+      {/* moño: dos caramelos, uno por cada lista */}
+      <circle cx="16" cy="11" r="7" fill="var(--endulzada)" />
+      <circle cx="32" cy="11" r="7" fill="var(--regalo)" />
+      {/* nudo */}
+      <circle cx="24" cy="13.5" r="3.5" fill="var(--primary)" />
     </svg>
   );
 }
@@ -44,14 +50,23 @@ export function LogoMark({ className }: { className?: string }) {
 export function Logo({
   className,
   markClassName,
+  wordClassName,
 }: {
   className?: string;
   markClassName?: string;
+  wordClassName?: string;
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <LogoMark className={markClassName} />
-      <span className="font-heading text-lg leading-none font-semibold tracking-tight">
+      <span
+        className={cn(
+          // Baloo 2: redonda y con peso, para que el nombre suene dulce sin
+          // depender de la serif que usan los títulos.
+          "font-logo text-xl leading-none font-extrabold tracking-tight",
+          wordClassName,
+        )}
+      >
         EndulzApp
       </span>
     </span>

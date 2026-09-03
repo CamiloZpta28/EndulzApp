@@ -33,8 +33,13 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  // Touching getUser() is what triggers the token refresh. Do not remove.
-  await supabase.auth.getUser();
+  // Esta llamada es la que refresca el token; no se puede quitar.
+  //
+  // `getClaims()` y no `getUser()`: con las llaves ES256 de este proyecto la
+  // verificación es local (WebCrypto + JWKS cacheado) y solo sale a la red
+  // cuando de verdad hay que refrescar. `getUser()` preguntaba al servidor de
+  // Auth en cada request, y el proxy corre en todas.
+  await supabase.auth.getClaims();
 
   return response;
 }

@@ -10,6 +10,7 @@
  */
 import { redirect } from "next/navigation";
 
+import { getSessionUser, type SessionUser } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Assignment,
@@ -28,12 +29,9 @@ import type {
 /* -------------------------------------------------------------------------- */
 
 /** The signed-in user, or `null`. Never throws. */
-export async function getUser() {
+export async function getUser(): Promise<SessionUser | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
+  return getSessionUser(supabase);
 }
 
 /** The signed-in user, or a redirect to `/login?next=…`. */

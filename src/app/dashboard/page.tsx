@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { Candy, ChevronRight, Gift, Users } from "lucide-react";
+import { Candy, ChevronRight, Sparkles } from "lucide-react";
 
 import { AppHeader } from "@/components/app-header";
+import { AutoRefresh } from "@/components/auto-refresh";
+import { AvatarStack } from "@/components/avatar-stack";
 import { CreateGroupDialog } from "@/components/create-group-dialog";
 import { Shell } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getMyGroups, getProfile, requireUser } from "@/lib/db";
-import { formatMoney } from "@/lib/format";
+import { formatGroupDate } from "@/lib/format";
 
 export default async function DashboardPage() {
   const user = await requireUser("/dashboard");
@@ -15,12 +17,13 @@ export default async function DashboardPage() {
 
   const name =
     profile?.display_name?.trim() ||
-    (user.user_metadata?.display_name as string | undefined) ||
+    user.displayName ||
     user.email?.split("@")[0] ||
     "parcero";
 
   return (
     <>
+      <AutoRefresh />
       <AppHeader
         title="Mis parches"
         subtitle={`Hola, ${name}`}
@@ -39,69 +42,92 @@ export default async function DashboardPage() {
             </Card>
           ) : (
             <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {groups.map((group) => (
-                <li key={group.id}>
-                  <Link href={`/g/${group.id}`} className="block h-full">
-                    <Card className="hover:border-primary/50 flex h-full flex-row items-center gap-3 p-4 transition-colors">
-                      <span
-                        className="bg-muted flex size-11 shrink-0 items-center justify-center rounded-xl text-xl"
-                        aria-hidden
-                      >
-                        {group.emoji || "🎁"}
-                      </span>
+              {groups.map((group) => {
+                const endulzada = formatGroupDate(group.endulzada_at);
+                const reveal = formatGroupDate(group.reveal_at);
 
-                      <div className="min-w-0 flex-1 space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate font-semibold">
-                            {group.name}
+                return (
+                  <li key={group.id}>
+                    <Link href={`/g/${group.id}`} className="block h-full">
+                      <Card className="hover:border-primary/50 h-full space-y-3 p-4 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="bg-muted flex size-11 shrink-0 items-center justify-center rounded-xl text-xl"
+                            aria-hidden
+                          >
+                            {group.emoji || "🎁"}
                           </span>
-                          {group.is_admin && (
-                            <Badge variant="outline" className="shrink-0">
-                              Admin
+
+                          <div className="min-w-0 flex-1">
+                            <p className="flex items-center gap-2">
+                              <span className="truncate font-semibold">
+                                {group.name}
+                              </span>
+                              {group.is_admin && (
+                                <Badge variant="outline" className="shrink-0">
+                                  Admin
+                                </Badge>
+                              )}
+                            </p>
+                            <Badge
+                              variant={
+                                group.status === "drawn" ? "default" : "secondary"
+                              }
+                            >
+                              {group.status === "drawn"
+                                ? "Sorteado"
+                                : "Sin sortear"}
                             </Badge>
-                          )}
+                          </div>
+
+                          <ChevronRight
+                            className="text-muted-foreground size-5 shrink-0"
+                            aria-hidden
+                          />
                         </div>
 
-                        <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                          <span className="inline-flex items-center gap-1">
-                            <Users className="size-3.5" aria-hidden />
-                            {group.member_count}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Candy
-                              className="size-3.5"
-                              style={{ color: "var(--endulzada)" }}
-                              aria-hidden
-                            />
-                            {formatMoney(group.budget_endulzada, group.currency)}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Gift
-                              className="size-3.5"
-                              style={{ color: "var(--regalo)" }}
-                              aria-hidden
-                            />
-                            {formatMoney(group.budget_regalo, group.currency)}
-                          </span>
-                        </div>
+                        <AvatarStack
+                          members={group.members}
+                          total={group.member_count}
+                        />
 
-                        <Badge
-                          variant={
-                            group.status === "drawn" ? "default" : "secondary"
-                          }
-                        >
-                          {group.status === "drawn" ? "Sorteado" : "Sin sortear"}
-                        </Badge>
-                      </div>
-
-                      <ChevronRight
-                        className="text-muted-foreground size-5 shrink-0"
-                        aria-hidden
-                      />
-                    </Card>
-                  </Link>
-                </li>
-              ))}
+                        {(endulzada || reveal) && (
+                          <dl className="space-y-1 text-xs">
+                            {endulzada && (
+                              <div className="flex items-center gap-1.5">
+                                <Candy
+                                  className="size-3.5 shrink-0"
+                                  style={{ color: "var(--endulzada)" }}
+                                  aria-hidden
+                                />
+                                <dt className="text-muted-foreground">
+                                  Siguiente endulzada
+                                </dt>
+                                <dd className="ml-auto font-medium">
+                                  {endulzada}
+                                </dd>
+                              </div>
+                            )}
+                            {reveal && (
+                              <div className="flex items-center gap-1.5">
+                                <Sparkles
+                                  className="size-3.5 shrink-0"
+                                  style={{ color: "var(--regalo)" }}
+                                  aria-hidden
+                                />
+                                <dt className="text-muted-foreground">
+                                  Descubrimiento
+                                </dt>
+                                <dd className="ml-auto font-medium">{reveal}</dd>
+                              </div>
+                            )}
+                          </dl>
+                        )}
+                      </Card>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           )}
 

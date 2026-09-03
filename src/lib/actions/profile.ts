@@ -1,41 +1,37 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { getSessionUser } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
+import { parseHttpUrl, removeUploaded, uploadImage } from "@/lib/upload";
 import type { Database, WishlistType } from "@/lib/types";
 import { type ActionState, done, fail, toMessage } from "./types";
 
 const AVATAR_BUCKET = "avatars";
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/webp"]);
+const AVATAR_MIME = new Set(["image/png", "image/jpeg", "image/webp"]);
+
+/** Las fotos de la lista base van al mismo bucket que las de los parches. */
+const ITEM_BUCKET = "wishlist-images";
+const MAX_ITEM_BYTES = 5 * 1024 * 1024;
+const ITEM_MIME = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
 
 function parseType(value: FormDataEntryValue | null): WishlistType | null {
   const type = String(value ?? "");
   return type === "endulzada" || type === "regalo" ? type : null;
 }
 
-/** Solo http(s), para que una lista no pueda esconder un `javascript:`. */
-function parseUrl(value: FormDataEntryValue | null) {
-  const raw = String(value ?? "").trim();
-  if (!raw) return null;
-  const candidate = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-  try {
-    const parsed = new URL(candidate);
-    return parsed.protocol === "http:" || parsed.protocol === "https:"
-      ? parsed.toString()
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-/** `YYYY-MM-DD` o nada. Un string vacío borra la fecha. */
+/** `YYYY-MM-DD` o nada. Un string vacío borra la fecha; `undefined` = inválida. */
 function parseBirthday(value: FormDataEntryValue | null) {
   const raw = String(value ?? "").trim();
   if (!raw) return null;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return undefined; // inválido
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return undefined;
   const date = new Date(`${raw}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return undefined;
   const year = date.getUTCFullYear();
@@ -43,31 +39,35 @@ function parseBirthday(value: FormDataEntryValue | null) {
   return raw;
 }
 
-async function uploadAvatar(
-  supabase: SupabaseClient<Database>,
+/**
+ * La foto de un antojo puede llegar como archivo (escogido o pegado) o como
+ * dirección de internet. El archivo manda.
+ */
+async function resolveItemImage(
+  supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
-  file: File,
-): Promise<{ url: string } | { error: string }> {
-  if (file.size > MAX_AVATAR_BYTES) {
-    return { error: "La foto no puede pasar de 2 MB." };
+  formData: FormData,
+): Promise<{ value: string | null } | { error: string }> {
+  const file = formData.get("image");
+  if (file instanceof File && file.size > 0) {
+    const uploaded = await uploadImage(supabase, {
+      bucket: ITEM_BUCKET,
+      userId,
+      file,
+      maxBytes: MAX_ITEM_BYTES,
+      allowed: ITEM_MIME,
+      label: "La imagen",
+    });
+    if ("error" in uploaded) return { error: uploaded.error };
+    return { value: uploaded.url };
   }
-  if (!ALLOWED_MIME.has(file.type)) {
-    return { error: "Solo aceptamos PNG, JPG o WEBP." };
-  }
 
-  const extension = file.name.split(".").pop()?.toLowerCase().slice(0, 5) ?? "jpg";
-  const path = `${userId}/${crypto.randomUUID()}.${extension}`;
+  const pasted = String(formData.get("image_url") ?? "").trim();
+  if (!pasted) return { value: null };
 
-  const { error } = await supabase.storage
-    .from(AVATAR_BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false });
-
-  if (error) return { error: toMessage(error, "No pudimos subir la foto.") };
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
-  return { url: publicUrl };
+  const url = parseHttpUrl(pasted);
+  if (!url) return { error: "Esa dirección de imagen no parece válida." };
+  return { value: url };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -87,9 +87,7 @@ export async function updateProfile(
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) return fail("Inicia sesión para editar tu perfil.");
 
   const patch: Database["public"]["Tables"]["profiles"]["Update"] = {
@@ -100,7 +98,14 @@ export async function updateProfile(
 
   const file = formData.get("avatar");
   if (file instanceof File && file.size > 0) {
-    const result = await uploadAvatar(supabase, user.id, file);
+    const result = await uploadImage(supabase, {
+      bucket: AVATAR_BUCKET,
+      userId: user.id,
+      file,
+      maxBytes: MAX_AVATAR_BYTES,
+      allowed: AVATAR_MIME,
+      label: "La foto",
+    });
     if ("error" in result) return fail(result.error);
     patch.avatar_url = result.url;
   }
@@ -120,12 +125,18 @@ export async function updateProfile(
 
 export async function removeAvatar(): Promise<void> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) return;
 
+  const { data: before } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
+
   await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+  await removeUploaded(supabase, AVATAR_BUCKET, before?.avatar_url ?? null);
+
   revalidatePath("/perfil");
   revalidatePath("/dashboard", "layout");
 }
@@ -144,17 +155,19 @@ export async function addProfileItem(
   if (!itemName) return fail("¿Qué se te antoja? Escríbelo.");
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) return fail("Inicia sesión para editar tu lista.");
+
+  const image = await resolveItemImage(supabase, user.id, formData);
+  if ("error" in image) return fail(image.error);
 
   const { error } = await supabase.from("profile_wishlists").insert({
     user_id: user.id,
     type,
     item_name: itemName,
-    url: parseUrl(formData.get("url")),
+    url: parseHttpUrl(formData.get("url")),
     note: String(formData.get("note") ?? "").trim() || null,
+    image_url: image.value,
   });
 
   if (error) return fail(toMessage(error, "No pudimos guardar el antojo."));
@@ -171,12 +184,22 @@ export async function deleteProfileItem(
   if (!itemId) return fail("Falta el antojo.");
 
   const supabase = await createClient();
+
+  // Se lee la ruta antes de borrar la fila, si no queda el objeto huérfano.
+  const { data: before } = await supabase
+    .from("profile_wishlists")
+    .select("image_url")
+    .eq("id", itemId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("profile_wishlists")
     .delete()
     .eq("id", itemId);
 
   if (error) return fail(toMessage(error, "No pudimos borrar el antojo."));
+
+  await removeUploaded(supabase, ITEM_BUCKET, before?.image_url ?? null);
 
   revalidatePath("/perfil");
   return done("Antojo eliminado.");

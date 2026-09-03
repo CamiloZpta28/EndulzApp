@@ -33,6 +33,10 @@ export type Group = {
   budget_endulzada: number;
   budget_regalo: number;
   currency: string;
+  /** Próxima entrega de endulzada (`YYYY-MM-DD`). */
+  endulzada_at: string | null;
+  /** El día del descubrimiento. */
+  reveal_at: string | null;
   drawn_at: string | null;
   created_at: string;
 };
@@ -128,6 +132,9 @@ export type ClaimPreview = {
   status: GroupStatus;
 };
 
+/** Una carita para la tarjeta del parche. */
+export type MemberChip = { name: string; avatar_url: string | null };
+
 /** `public.my_groups()` */
 export type GroupSummary = {
   id: string;
@@ -135,11 +142,15 @@ export type GroupSummary = {
   status: GroupStatus;
   admin_id: string;
   is_admin: boolean;
-  emoji?: string | null;
+  emoji: string | null;
   budget_endulzada: number;
   budget_regalo: number;
   currency: string;
+  endulzada_at: string | null;
+  reveal_at: string | null;
   member_count: number;
+  /** Hasta 6, en orden de llegada. */
+  members: MemberChip[];
   created_at: string;
 };
 
@@ -166,6 +177,8 @@ export type Database = {
           budget_regalo?: number;
           currency?: string;
           emoji?: string | null;
+          endulzada_at?: string | null;
+          reveal_at?: string | null;
         };
         Update: {
           name?: string;
@@ -173,6 +186,8 @@ export type Database = {
           budget_regalo?: number;
           currency?: string;
           emoji?: string | null;
+          endulzada_at?: string | null;
+          reveal_at?: string | null;
         };
         Relationships: [];
       };

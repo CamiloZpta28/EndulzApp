@@ -3,6 +3,7 @@ import { Lock, Users } from "lucide-react";
 
 import { AppHeader } from "@/components/app-header";
 import { AssignmentReveal } from "@/components/assignment-reveal";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { BudgetBanner } from "@/components/budget-banner";
 import { DrawPanel } from "@/components/draw-panel";
 import { GroupSettingsDialog } from "@/components/group-settings-dialog";
@@ -56,6 +57,7 @@ export default async function GroupPage({
 
   return (
     <>
+      <AutoRefresh />
       <AppHeader
         title={group.name}
         emoji={group.emoji}
@@ -146,7 +148,10 @@ export default async function GroupPage({
               ) : (
                 <>
                   <div className="mx-auto max-w-md">
-                    <AssignmentReveal name={displayName(assignment)} />
+                    <AssignmentReveal
+                      name={displayName(assignment)}
+                      avatarUrl={assignment.avatar_url}
+                    />
                   </div>
 
                   <Separator />

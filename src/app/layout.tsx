@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Baloo_2, Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -20,6 +20,14 @@ const fraunces = Fraunces({
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
+  display: "swap",
+});
+
+/** Solo para el nombre de la app: redonda y con peso, se lee como un dulce. */
+const baloo = Baloo_2({
+  variable: "--font-baloo",
+  subsets: ["latin"],
+  weight: ["600", "800"],
   display: "swap",
 });
 
@@ -46,7 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="es"
       suppressHydrationWarning
-      className={`${jakarta.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${fraunces.variable} ${baloo.variable} h-full antialiased`}
     >
       <body className="bg-background text-foreground flex min-h-full flex-col">
         <ThemeProvider

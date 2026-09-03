@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useActionState, useRef, useState } from "react";
 import { Candy, ExternalLink, Gift, Plus, Trash2 } from "lucide-react";
 
+import { ImagePicker } from "@/components/image-picker";
 import { SubmitButton } from "@/components/submit-button";
 import { useActionToast } from "@/components/use-action-toast";
 import { Button } from "@/components/ui/button";
@@ -34,9 +36,9 @@ const META: Record<
 };
 
 /**
- * Una sección de la lista base. Sin foto y sin tope: acá no hay presupuesto
- * porque la lista no pertenece a ningún parche todavía; las fotos se agregan
- * al importarla, donde sí hay contexto.
+ * Una sección de la lista base. Sin tope: acá no hay presupuesto porque la
+ * lista todavía no pertenece a ningún parche — el tope lo pone cada parche
+ * cuando la importas.
  */
 export function ProfileWishlist({
   type,
@@ -126,6 +128,8 @@ export function ProfileWishlist({
             />
           </div>
 
+          <ImagePicker idPrefix={`perfil-${type}`} />
+
           <SubmitButton className="w-full" pendingLabel="Guardando…">
             Guardar
           </SubmitButton>
@@ -141,6 +145,17 @@ export function ProfileWishlist({
               key={item.id}
               className="bg-card flex items-start gap-3 rounded-xl border p-3"
             >
+              {item.image_url && (
+                <Image
+                  src={item.image_url}
+                  alt=""
+                  width={56}
+                  height={56}
+                  unoptimized
+                  className="size-14 shrink-0 rounded-lg object-cover"
+                />
+              )}
+
               <div className="min-w-0 flex-1 space-y-1">
                 <p className="leading-snug font-medium">{item.item_name}</p>
                 {item.note && (

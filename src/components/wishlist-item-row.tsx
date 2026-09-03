@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useActionState, useState } from "react";
 import { ExternalLink, Pencil, Trash2, X } from "lucide-react";
 
+import { ImagePicker } from "@/components/image-picker";
 import { SubmitButton } from "@/components/submit-button";
 import { useActionToast } from "@/components/use-action-toast";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,8 @@ export function WishlistItemRow({
               defaultValue={item.note ?? ""}
             />
           </div>
+
+          <ImagePicker idPrefix={`editar-${item.id}`} />
 
           <div className="flex gap-2">
             <SubmitButton className="flex-1" pendingLabel="Guardando…">

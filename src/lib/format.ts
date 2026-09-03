@@ -60,3 +60,35 @@ export function formatBirthday(value?: string | null) {
     timeZone: "UTC",
   }).format(date);
 }
+
+/**
+ * Una fecha del parche, corta y con contexto: "hoy", "mañana", "en 5 días" o
+ * "12 de dic". Se ancla a mediodía UTC porque la columna es `date`: leerla en
+ * la zona local correría el día hacia atrás al oeste de Greenwich.
+ */
+export function formatGroupDate(value?: string | null) {
+  if (!value) return null;
+  const date = new Date(`${value}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const today = new Date();
+  const todayUtc = Date.UTC(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+    12,
+  );
+  const days = Math.round((date.getTime() - todayUtc) / 86_400_000);
+
+  if (days === 0) return "hoy";
+  if (days === 1) return "mañana";
+  if (days === -1) return "ayer";
+  if (days > 1 && days <= 14) return `en ${days} días`;
+  if (days < -1) return "ya pasó";
+
+  return new Intl.DateTimeFormat("es-CO", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(date);
+}

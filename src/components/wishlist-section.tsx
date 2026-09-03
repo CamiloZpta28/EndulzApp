@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from "react";
 import { Candy, Gift, Plus } from "lucide-react";
 
+import { ImagePicker } from "@/components/image-picker";
 import { SubmitButton } from "@/components/submit-button";
 import { useActionToast } from "@/components/use-action-toast";
 import { Button } from "@/components/ui/button";
@@ -140,16 +141,7 @@ export function WishlistSection({
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor={`image-${type}`}>Foto (opcional)</Label>
-            <Input
-              id={`image-${type}`}
-              name="image"
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-            />
-            <p className="text-muted-foreground text-xs">Máximo 5 MB.</p>
-          </div>
+          <ImagePicker idPrefix={`nuevo-${type}`} />
 
           <SubmitButton className="w-full" pendingLabel="Guardando…">
             Guardar antojo

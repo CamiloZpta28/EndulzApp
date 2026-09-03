@@ -15,7 +15,7 @@ export default async function ProfilePage() {
   const lists = groupByType(items);
   const name =
     profile?.display_name?.trim() ||
-    (user.user_metadata?.display_name as string | undefined) ||
+    user.displayName ||
     user.email?.split("@")[0] ||
     "Parcero";
 

@@ -239,6 +239,11 @@ export function AvatarCropper({
                 style={{
                   width: shown.width,
                   height: shown.height,
+                  // El preflight de Tailwind trae `img { max-width: 100% }`,
+                  // que recortaba el ancho al del marco mientras el alto sí se
+                  // aplicaba: la foto salía estirada, y más a más zoom.
+                  maxWidth: "none",
+                  maxHeight: "none",
                   left: "50%",
                   top: "50%",
                   transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
