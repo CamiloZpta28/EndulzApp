@@ -5,16 +5,15 @@ import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { parseHttpUrl, removeUploaded, uploadImage } from "@/lib/upload";
+import { MAX_AVATAR_BYTES, MAX_IMAGE_BYTES } from "@/lib/upload-limits";
 import type { Database, WishlistType } from "@/lib/types";
 import { type ActionState, done, fail, toMessage } from "./types";
 
 const AVATAR_BUCKET = "avatars";
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const AVATAR_MIME = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 /** Las fotos de la lista base van al mismo bucket que las de los grupos. */
 const ITEM_BUCKET = "wishlist-images";
-const MAX_ITEM_BYTES = 5 * 1024 * 1024;
 const ITEM_MIME = new Set([
   "image/png",
   "image/jpeg",
@@ -56,7 +55,7 @@ async function resolveItemImage(
       bucket: ITEM_BUCKET,
       userId,
       file,
-      maxBytes: MAX_ITEM_BYTES,
+      maxBytes: MAX_IMAGE_BYTES,
       allowed: ITEM_MIME,
       label: "La imagen",
     });

@@ -1,13 +1,21 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ClipboardPaste, ImagePlus, Link2, Upload, X } from "lucide-react";
+import {
+  ClipboardPaste,
+  ImagePlus,
+  Link2,
+  Loader2,
+  Upload,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { shrinkImage } from "@/lib/image-shrink";
+import { MAX_IMAGE_BYTES, formatBytes } from "@/lib/upload-limits";
 
-const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 
 /**
@@ -43,18 +51,29 @@ export function ImagePicker({
   const [urlValue, setUrlValue] = useState("");
   const [cleared, setCleared] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [savedNote, setSavedNote] = useState<string | null>(null);
   const [showUrl, setShowUrl] = useState(false);
 
-  function acceptFile(file: File) {
-    if (!ALLOWED.has(file.type)) {
+  async function acceptFile(original: File) {
+    if (!ALLOWED.has(original.type)) {
       setError("Solo PNG, JPG, WEBP o GIF.");
       return;
     }
-    if (file.size > MAX_BYTES) {
-      setError("La imagen no puede pasar de 5 MB.");
+
+    setError(null);
+    setBusy(true);
+    // Se achica ANTES de tocar el formulario: si no cabe, no se guarda nada a
+    // medias y el mensaje sale acá mismo, sin ir al servidor a que lo rechace.
+    const result = await shrinkImage(original, { maxBytes: MAX_IMAGE_BYTES });
+    setBusy(false);
+
+    if ("error" in result) {
+      setError(result.error);
       return;
     }
-    setError(null);
+
+    const { file, shrunk } = result;
     try {
       const transfer = new DataTransfer();
       transfer.items.add(file);
@@ -63,8 +82,14 @@ export function ImagePicker({
       setError("Tu navegador no deja pegar imágenes; usa «Subir».");
       return;
     }
+
     if (preview) URL.revokeObjectURL(preview);
     setPreview(URL.createObjectURL(file));
+    setSavedNote(
+      shrunk
+        ? `Se optimizó: de ${formatBytes(original.size)} a ${formatBytes(file.size)}.`
+        : null,
+    );
     // Una imagen sube y desplaza cualquier dirección escrita antes.
     setUrlValue("");
     setCleared(false);
@@ -75,6 +100,7 @@ export function ImagePicker({
     setPreview(null);
     setUrlValue("");
     setError(null);
+    setSavedNote(null);
     if (fileRef.current) fileRef.current.value = "";
     // Solo cuenta como "quitar" si de verdad había algo guardado.
     setCleared(Boolean(existingUrl));
@@ -108,7 +134,7 @@ export function ImagePicker({
             const file = item.getAsFile();
             if (file) {
               event.preventDefault();
-              acceptFile(file);
+              void acceptFile(file);
               return;
             }
           }
@@ -123,7 +149,12 @@ export function ImagePicker({
         }}
         className="focus-visible:border-ring focus-visible:ring-ring/50 flex flex-wrap items-center gap-2 rounded-lg border border-dashed p-2 focus-visible:ring-3 focus-visible:outline-none"
       >
-        {shown ? (
+        {busy ? (
+          <span className="text-muted-foreground flex items-center gap-2 text-xs">
+            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            Optimizando la foto…
+          </span>
+        ) : shown ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -194,6 +225,10 @@ export function ImagePicker({
         </p>
       )}
 
+      {savedNote && !error && (
+        <p className="text-muted-foreground text-xs">{savedNote}</p>
+      )}
+
       {error && <p className="text-destructive text-xs">{error}</p>}
 
       <input
@@ -204,7 +239,7 @@ export function ImagePicker({
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];
-          if (file) acceptFile(file);
+          if (file) void acceptFile(file);
         }}
       />
 

@@ -5,11 +5,11 @@ import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { parseHttpUrl, removeUploaded, uploadImage } from "@/lib/upload";
+import { MAX_IMAGE_BYTES } from "@/lib/upload-limits";
 import type { WishlistType } from "@/lib/types";
 import { type ActionState, done, fail, toMessage } from "./types";
 
 const BUCKET = "wishlist-images";
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME = new Set([
   "image/png",
   "image/jpeg",
