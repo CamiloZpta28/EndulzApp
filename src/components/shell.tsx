@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
  * escritorio no se estira el texto hasta el borde — se sube el techo lo justo
  * para que el contenido pueda ir en dos columnas y deje de verse un pasillo
  * vacío a los lados.
+ *
+ * El relleno lateral es `safe-x`, que respeta el notch cuando el celular está
+ * en horizontal (en vertical esos insets son 0 y queda el margen normal).
  */
 export function Shell({
   children,
@@ -27,7 +30,7 @@ export function Shell({
   }[width];
 
   return (
-    <div className={cn("mx-auto w-full px-4 md:px-6", max, className)}>
+    <div className={cn("safe-x mx-auto w-full", max, className)}>
       {children}
     </div>
   );

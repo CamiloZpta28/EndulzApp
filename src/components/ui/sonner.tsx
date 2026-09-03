@@ -11,6 +11,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      // Con `viewport-fit=cover` el toast en `top` quedaba encima del reloj.
+      // `mobileOffset` es el que aplica en pantalla angosta; sonner usa uno u
+      // otro según el ancho, así que van los dos.
+      offset={{ top: "calc(var(--safe-top) + 1rem)" }}
+      mobileOffset={{ top: "calc(var(--safe-top) + 0.75rem)" }}
       icons={{
         success: (
           <CircleCheckIcon className="size-4" />

@@ -153,6 +153,27 @@
   --regalo: oklch(0.6 0.13 240);
   --regalo-soft: oklch(0.96 0.03 240);
 
+  /* ------------------------------------------------------------------ */
+  /* Zona segura del dispositivo (barra de estado, notch, barra de gestos).
+     Con `viewport-fit=cover` la página se dibuja por debajo de todo eso, así
+     que cualquier cosa fija tiene que reservar estos espacios a mano. En un
+     navegador de escritorio los cuatro valen 0. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Alto máximo de una ventana flotante centrada.
+     Se resta DOS VECES el inset más grande, no la suma de los dos: al centrar
+     con `translate(-50%)` el espacio que sobra se reparte mitad y mitad, así
+     que para que ningún borde quede debajo de una barra hay que reservar el
+     mayor de los dos EN CADA LADO. Con la suma, un notch grande arriba y nada
+     abajo dejaría el popup tapado por la barra de estado. */
+  --popup-max-h: calc(
+    100dvh - 2 * max(var(--safe-top), var(--safe-bottom)) - 2rem
+  );
+  /* ------------------------------------------------------------------ */
+
   /* Un blanco tibio en vez de blanco puro: acompaña mejor al rojo caramelo. */
   --background: oklch(0.988 0.004 25);
   --card: oklch(1 0 0);
@@ -193,4 +214,30 @@
   --accent-foreground: oklch(0.97 0.005 240);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
+}
+
+/* --------------------------------------------------------------------------
+   El contenido nunca queda debajo de la barra de gestos, y en horizontal
+   tampoco debajo del notch lateral.
+   -------------------------------------------------------------------------- */
+@layer base {
+  body {
+    padding-bottom: var(--safe-bottom);
+  }
+}
+
+@layer utilities {
+  /* El relleno lateral del contenedor de la app. `max()` para que en vertical
+     (insets en 0) siga siendo el margen normal. */
+  .safe-x {
+    padding-left: max(1rem, var(--safe-left));
+    padding-right: max(1rem, var(--safe-right));
+  }
+
+  @media (min-width: 768px) {
+    .safe-x {
+      padding-left: max(1.5rem, var(--safe-left));
+      padding-right: max(1.5rem, var(--safe-right));
+    }
+  }
 }
