@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import { IdCard } from "lucide-react";
 
 import { SubmitButton } from "@/components/submit-button";
@@ -31,6 +31,7 @@ export function NicknameDialog({
   currentNickname,
   profileName,
   forSomeoneElse = false,
+  trigger,
 }: {
   groupId: string;
   memberId: string;
@@ -38,6 +39,8 @@ export function NicknameDialog({
   profileName: string;
   /** El admin poniéndole apodo a alguien más cambia solo los textos. */
   forSomeoneElse?: boolean;
+  /** Quien la usa decide el botón; por defecto es uno con etiqueta. */
+  trigger?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState(updateNickname, idle);
@@ -48,16 +51,18 @@ export function NicknameDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="outline" size="sm">
-            <IdCard className="size-3.5" aria-hidden />
-            {forSomeoneElse
-              ? currentNickname
-                ? "Cambiar su apodo"
-                : "Ponerle un apodo"
-              : currentNickname
-                ? "Cambiar mi apodo"
-                : "Ponerme un apodo"}
-          </Button>
+          (trigger as never) ?? (
+            <Button variant="outline" size="sm">
+              <IdCard className="size-3.5" aria-hidden />
+              {forSomeoneElse
+                ? currentNickname
+                  ? "Cambiar su apodo"
+                  : "Ponerle un apodo"
+                : currentNickname
+                  ? "Cambiar mi apodo"
+                  : "Ponerme un apodo"}
+            </Button>
+          )
         }
       />
 

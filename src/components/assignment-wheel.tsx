@@ -9,18 +9,50 @@ import { markAssignmentRevealed } from "@/lib/actions/members";
 
 type Slice = { name: string; avatarUrl: string | null };
 
+/** Tres tintes y no dos: con un número impar de gajos, alternar dos deja el
+ *  primero y el último del mismo color pegados. Con tres eso no pasa salvo en
+ *  casos raros, y el borde blanco entre gajos lo termina de separar. */
+const FILLS = [
+  "var(--endulzada-soft)",
+  "var(--regalo-soft)",
+  "color-mix(in oklch, var(--primary), transparent 88%)",
+];
+
+const R = 46;
+const CENTER = 50;
+
+/** Ángulo medido desde arriba, en sentido del reloj, a coordenadas del SVG. */
+function pointAt(angleDeg: number, radius: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return {
+    x: CENTER + radius * Math.cos(rad),
+    y: CENTER + radius * Math.sin(rad),
+  };
+}
+
+function slicePath(from: number, to: number) {
+  const start = pointAt(from, R);
+  const end = pointAt(to, R);
+  const largeArc = to - from > 180 ? 1 : 0;
+  return `M ${CENTER} ${CENTER} L ${start.x.toFixed(2)} ${start.y.toFixed(
+    2,
+  )} A ${R} ${R} 0 ${largeArc} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)} Z`;
+}
+
 /**
  * La ruleta del sorteo, una sola vez por persona.
  *
  * Cómo funciona el truco: el resultado ya está decidido en la base desde que
  * el admin sorteó — la ruleta no decide nada. Se calcula el ángulo exacto que
- * deja el gajo del ganador arriba y se rota hasta ahí, con varias vueltas de
- * más para que se sienta un giro y no un salto. Es decir: la animación es
- * teatro sobre un resultado que ya existe, que es lo que permite que sea
- * honesta y que no se pueda "volver a girar" para cambiarla.
+ * deja el gajo del ganador bajo la aguja y se rota hasta ahí, con vueltas de
+ * más para que se sienta un giro. Es teatro sobre un resultado que ya existe,
+ * que es justo lo que permite que sea honesto y que no se pueda volver a
+ * girar para cambiarlo.
  *
- * Si no hay `prefers-reduced-motion`, gira 4 vueltas en 4.5 s con una curva
- * que desacelera al final. Con movimiento reducido, salta al resultado.
+ * Los gajos van en SVG y no en `conic-gradient`: hacía falta un borde entre
+ * gajos y rótulos que se puedan poner en el sitio exacto. Los nombres van
+ * DERECHOS (contra-rotados), no radiales — radiales quedaban de cabeza en la
+ * mitad izquierda.
  */
 export function AssignmentWheel({
   groupId,
@@ -33,15 +65,16 @@ export function AssignmentWheel({
   slices: Slice[];
   /** Índice del que salió, dentro de `slices`. */
   winnerIndex: number;
-  onDone: () => void;
+  /** Se llama al terminar; recibe si conviene abrir la lista del ganador. */
+  onDone: (options: { openList: boolean }) => void;
 }) {
   const [spinning, setSpinning] = useState(false);
   const [landed, setLanded] = useState(false);
   const [angle, setAngle] = useState(0);
-  const wheelRef = useRef<HTMLDivElement>(null);
+  const wheelRef = useRef<SVGGElement>(null);
 
   const count = slices.length;
-  const sliceAngle = 360 / count;
+  const step = 360 / count;
   const winner = slices[winnerIndex];
 
   // Se marca en la base al aterrizar, no al montar: si alguien cierra la
@@ -56,11 +89,10 @@ export function AssignmentWheel({
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // El gajo `i` está centrado en `i * sliceAngle + sliceAngle / 2`, medido
-    // desde arriba en el sentido del reloj. Para dejarlo bajo la aguja hay que
-    // rotar el negativo de eso.
-    const target = -(winnerIndex * sliceAngle + sliceAngle / 2);
-    const turns = reduced ? 0 : 4;
+    // El gajo `i` está centrado en `i * step + step / 2`. Para dejarlo bajo la
+    // aguja (arriba) hay que rotar la rueda el negativo de eso.
+    const target = -(winnerIndex * step + step / 2);
+    const turns = reduced ? 0 : 5;
 
     setSpinning(true);
     setAngle(360 * turns + target);
@@ -72,7 +104,11 @@ export function AssignmentWheel({
     }
 
     const node = wheelRef.current;
-    if (!node) return;
+    if (!node) {
+      setSpinning(false);
+      setLanded(true);
+      return;
+    }
 
     const finish = () => {
       setSpinning(false);
@@ -93,65 +129,84 @@ export function AssignmentWheel({
         </p>
       </div>
 
-      <div className="relative mx-auto aspect-square w-full max-w-[280px]">
-        {/* la aguja */}
-        <div
-          aria-hidden
-          className="absolute top-0 left-1/2 z-10 -translate-x-1/2 -translate-y-1"
-        >
-          <div
-            className="size-0 border-x-[9px] border-t-[16px] border-x-transparent"
-            style={{ borderTopColor: "var(--primary)" }}
+      <div className="relative mx-auto w-full max-w-[300px]">
+        <svg viewBox="0 0 100 108" className="w-full" aria-hidden>
+          {/* la aguja, fija arriba */}
+          <path
+            d="M50 1 L45.5 9 L54.5 9 Z"
+            fill="var(--primary)"
           />
-        </div>
 
-        <div
-          ref={wheelRef}
-          className="size-full rounded-full border-4 shadow-inner"
-          style={{
-            borderColor: "var(--primary)",
-            transform: `rotate(${angle}deg)`,
-            transition: spinning
-              ? "transform 4.5s cubic-bezier(0.12, 0.7, 0.08, 1)"
-              : undefined,
-            // Los gajos son un cono cónico: un `conic-gradient` alternando los
-            // dos acentos. Más liviano que dibujar N paths en SVG.
-            background: `conic-gradient(${slices
-              .map((_, index) => {
-                const color =
-                  index % 2 === 0 ? "var(--endulzada-soft)" : "var(--regalo-soft)";
-                return `${color} ${index * sliceAngle}deg ${
-                  (index + 1) * sliceAngle
-                }deg`;
-              })
-              .join(", ")})`,
-          }}
-        >
-          {slices.map((slice, index) => (
-            <span
-              key={`${slice.name}-${index}`}
-              // Cada nombre se para en el centro de su gajo, mirando al centro.
-              className="absolute top-1/2 left-1/2 origin-left text-[11px] font-semibold"
-              style={{
-                transform: `rotate(${
-                  index * sliceAngle + sliceAngle / 2 - 90
-                }deg) translateX(28px)`,
-                maxWidth: "44%",
-              }}
-            >
-              <span className="text-foreground/80 block truncate">
-                {slice.name}
-              </span>
-            </span>
-          ))}
-        </div>
+          <g
+            ref={wheelRef}
+            style={{
+              transform: `rotate(${angle}deg)`,
+              transformOrigin: `${CENTER}px ${CENTER}px`,
+              transition: spinning
+                ? "transform 5s cubic-bezier(0.16, 0.72, 0.06, 1)"
+                : undefined,
+            }}
+          >
+            {slices.map((slice, index) => {
+              const from = index * step;
+              const to = from + step;
+              const label = pointAt(from + step / 2, R * 0.66);
+              const short =
+                slice.name.length > 10
+                  ? `${slice.name.slice(0, 9)}…`
+                  : slice.name;
 
-        {/* el centro */}
-        <div
-          aria-hidden
-          className="bg-card absolute top-1/2 left-1/2 size-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-4"
-          style={{ borderColor: "var(--primary)" }}
-        />
+              return (
+                <g key={`${slice.name}-${index}`}>
+                  <path
+                    d={slicePath(from, to)}
+                    fill={FILLS[index % FILLS.length]}
+                    stroke="var(--card)"
+                    strokeWidth="0.8"
+                  />
+                  {/* Contra-rotado para que el nombre quede derecho. */}
+                  <text
+                    x={label.x}
+                    y={label.y}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={count > 8 ? 4 : 5}
+                    fontWeight="700"
+                    fill="var(--foreground)"
+                    opacity="0.85"
+                    transform={`rotate(${-angle} ${label.x} ${label.y})`}
+                    style={{
+                      transition: spinning
+                        ? "transform 5s cubic-bezier(0.16, 0.72, 0.06, 1)"
+                        : undefined,
+                    }}
+                  >
+                    {short}
+                  </text>
+                </g>
+              );
+            })}
+
+            <circle
+              cx={CENTER}
+              cy={CENTER}
+              r={R}
+              fill="none"
+              stroke="var(--primary)"
+              strokeWidth="2.5"
+            />
+          </g>
+
+          {/* el eje */}
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            r="6"
+            fill="var(--card)"
+            stroke="var(--primary)"
+            strokeWidth="2.5"
+          />
+        </svg>
       </div>
 
       {landed ? (
@@ -160,19 +215,24 @@ export function AssignmentWheel({
           <p className="text-muted-foreground text-sm">Te salió…</p>
           <div className="flex flex-col items-center gap-2">
             {winner?.avatarUrl && (
-              <PersonAvatar
-                name={winner.name}
-                src={winner.avatarUrl}
-                size="lg"
-              />
+              <PersonAvatar name={winner.name} src={winner.avatarUrl} size="lg" />
             )}
             <p className="text-primary text-3xl leading-tight font-extrabold break-words">
               {winner?.name}
             </p>
           </div>
-          <Button className="w-full" onClick={onDone}>
-            Ver su lista de antojos
-          </Button>
+          <div className="space-y-2">
+            <Button className="w-full" onClick={() => onDone({ openList: true })}>
+              Ver su lista de antojos
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => onDone({ openList: false })}
+            >
+              Después
+            </Button>
+          </div>
         </div>
       ) : (
         <Button

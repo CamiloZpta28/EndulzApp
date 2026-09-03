@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Eye, PartyPopper } from "lucide-react";
+import { Eye, ListOrdered, PartyPopper } from "lucide-react";
 
 import { PersonAvatar } from "@/components/person-avatar";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,9 +19,12 @@ import { cn } from "@/lib/utils";
 export function AssignmentReveal({
   name,
   avatarUrl,
+  onOpenList,
 }: {
   name: string;
   avatarUrl?: string | null;
+  /** Cuando viene, se ofrece abrir su lista sin destapar el nombre. */
+  onOpenList?: () => void;
 }) {
   const [revealed, setRevealed] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -98,6 +102,13 @@ export function AssignmentReveal({
           </span>
         )}
       </button>
+
+      {onOpenList && (
+        <Button variant="outline" className="w-full" onClick={onOpenList}>
+          <ListOrdered className="size-4" aria-hidden />
+          Ver su lista de antojos
+        </Button>
+      )}
     </div>
   );
 }

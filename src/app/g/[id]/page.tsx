@@ -51,7 +51,6 @@ export default async function GroupPage({
   if (!myMember && !isAdmin) notFound();
 
   const mine = groupByType(myItems);
-  const theirs = groupByType(targetItems);
 
   const me = {
     name: profile?.display_name?.trim() || user.email?.split("@")[0] || "Perfil",
@@ -169,35 +168,13 @@ export default async function GroupPage({
                       winnerIndex={roster.findIndex(
                         (m) => m.member_id === assignment.member_id,
                       )}
+                      targetItems={targetItems}
+                      currency={group.currency}
+                      budgetEndulzada={group.budget_endulzada}
+                      budgetRegalo={group.budget_regalo}
                     />
                   </div>
 
-                  <Separator />
-
-                  <p className="text-muted-foreground text-sm">
-                    Su lista de antojos:
-                  </p>
-
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <WishlistSection
-                      type="endulzada"
-                      items={theirs.endulzada}
-                      groupId={group.id}
-                      memberId={assignment.member_id}
-                      budget={group.budget_endulzada}
-                      currency={group.currency}
-                      editable={false}
-                    />
-                    <WishlistSection
-                      type="regalo"
-                      items={theirs.regalo}
-                      groupId={group.id}
-                      memberId={assignment.member_id}
-                      budget={group.budget_regalo}
-                      currency={group.currency}
-                      editable={false}
-                    />
-                  </div>
                 </>
               )}
             </TabsContent>
@@ -257,7 +234,9 @@ export default async function GroupPage({
                 canRemove={isAdmin && group.status === "pending"}
                 canRename={isAdmin}
                 wishlists={Object.fromEntries(visibleWishlists)}
-                drawn={group.status === "drawn"}
+                currency={group.currency}
+                budgetEndulzada={group.budget_endulzada}
+                budgetRegalo={group.budget_regalo}
               />
 
               {isAdmin ? (
