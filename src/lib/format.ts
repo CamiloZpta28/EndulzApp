@@ -84,11 +84,18 @@ export function formatGroupDate(value?: string | null) {
   );
   const days = Math.round((date.getTime() - todayUtc) / 86_400_000);
 
-  const absolute = new Intl.DateTimeFormat("es-CO", {
+  // `format()` en es-CO devuelve "11 de sept"; ese "de" hacía que la fecha se
+  // partiera en dos líneas en la tarjeta. Se arma desde las partes para
+  // quedarse con "11 sept".
+  const parts = new Intl.DateTimeFormat("es-CO", {
     day: "numeric",
     month: "short",
     timeZone: "UTC",
-  }).format(date);
+  }).formatToParts(date);
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  const month = (parts.find((part) => part.type === "month")?.value ?? "")
+    .replace(/\.$/, "");
+  const absolute = `${day} ${month}`;
 
   let relative: string | null = null;
   if (days === 0) relative = "hoy";

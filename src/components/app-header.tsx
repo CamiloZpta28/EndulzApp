@@ -42,7 +42,10 @@ export function AppHeader({
 }) {
   return (
     <header
-      className="sticky top-0 z-10 text-white"
+      // El relleno de arriba es la zona segura (barra de estado / notch): el
+      // degradado la cubre y el color queda continuo, en vez de dejar una
+      // franja del color del fondo.
+      className="sticky top-0 z-10 pt-[env(safe-area-inset-top)] text-white"
       style={{
         background:
           "linear-gradient(150deg, color-mix(in oklch, var(--primary), #fff 8%) 0%, var(--primary) 45%, color-mix(in oklch, var(--primary), #000 30%) 100%)",

@@ -87,11 +87,11 @@ export default async function GroupPage({
             }
           />
 
-          <Tabs defaultValue="mi-lista">
+          <Tabs defaultValue="parche">
             <TabsList className="w-full">
-              <TabsTrigger value="mi-lista">Mi lista</TabsTrigger>
-              <TabsTrigger value="mi-amigo">Me salió</TabsTrigger>
               <TabsTrigger value="parche">Grupo</TabsTrigger>
+              <TabsTrigger value="mi-amigo">Me salió</TabsTrigger>
+              <TabsTrigger value="mi-lista">Mi lista</TabsTrigger>
             </TabsList>
 
             {/* ------------------------------------------------- mi wishlist */}

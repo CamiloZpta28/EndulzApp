@@ -32,12 +32,24 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  /**
+   * El color de la barra de estado. Iba en el color del fondo de la página, y
+   * por eso aparecía una franja clara encima del encabezado: el sistema
+   * pintaba la zona segura de un color y el encabezado empezaba con otro.
+   * Ahora es el color de marca, así que el color se ve continuo hasta arriba.
+   */
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fdf7f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#141013" },
+    { media: "(prefers-color-scheme: light)", color: "#e0475f" },
+    { media: "(prefers-color-scheme: dark)", color: "#4cbfe6" },
   ],
   width: "device-width",
   initialScale: 1,
+  /**
+   * `cover` deja que la página pinte por debajo de la barra de estado y del
+   * notch. Sin esto la zona segura la sigue pintando el navegador y el
+   * `env(safe-area-inset-*)` del encabezado no serviría de nada.
+   */
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

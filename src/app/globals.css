@@ -145,10 +145,13 @@
   --primary: oklch(0.58 0.21 12);
   --primary-foreground: oklch(0.99 0.01 20);
   --ring: oklch(0.58 0.21 12);
-  --endulzada: oklch(0.72 0.17 55);
-  --endulzada-soft: oklch(0.96 0.04 70);
-  --regalo: oklch(0.55 0.16 285);
-  --regalo-soft: oklch(0.96 0.03 290);
+  /* Los dos acentos siguen la paleta de la app: rosado para la endulzada y
+     azul cielo para el regalo. El naranja y el violeta de antes eran colores
+     de otro sistema y se veían pegados encima. */
+  --endulzada: oklch(0.64 0.18 355);
+  --endulzada-soft: oklch(0.965 0.035 355);
+  --regalo: oklch(0.6 0.13 240);
+  --regalo-soft: oklch(0.96 0.03 240);
 
   /* Un blanco tibio en vez de blanco puro: acompaña mejor al rojo caramelo. */
   --background: oklch(0.988 0.004 25);
@@ -167,10 +170,13 @@
   --primary: oklch(0.78 0.13 225);
   --primary-foreground: oklch(0.2 0.03 240);
   --ring: oklch(0.78 0.13 225);
-  --endulzada: oklch(0.78 0.16 60);
-  --endulzada-soft: oklch(0.28 0.06 60);
-  --regalo: oklch(0.7 0.14 288);
-  --regalo-soft: oklch(0.27 0.06 288);
+  /* En oscuro el `--primary` ya es azul cielo (225°), así que el regalo se
+     corre a 265° — azul, pero separado del color de marca. Si los dos
+     estuvieran en el mismo tono no se distinguiría el acento del botón. */
+  --endulzada: oklch(0.76 0.15 355);
+  --endulzada-soft: oklch(0.28 0.055 355);
+  --regalo: oklch(0.74 0.12 265);
+  --regalo-soft: oklch(0.27 0.05 265);
 
   /* Oscuro con un tinte frío suave, para que acompañe al azul. */
   --background: oklch(0.17 0.014 250);

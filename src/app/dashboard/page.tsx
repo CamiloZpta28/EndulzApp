@@ -94,36 +94,33 @@ export default async function DashboardPage() {
                         {(endulzada || reveal) && (
                           <dl className="space-y-1 text-xs">
                             {endulzada && (
-                              <div className="flex items-center gap-1.5">
-                                <Candy
-                                  className="size-3.5 shrink-0"
-                                  style={{ color: "var(--endulzada)" }}
-                                  aria-hidden
-                                />
-                                <dt className="text-muted-foreground">
-                                  Siguiente endulzada
-                                  {group.endulzada_count > 1 && (
-                                    <span className="ml-1 opacity-70">
-                                      (de {group.endulzada_count})
-                                    </span>
-                                  )}
+                              <div className="flex items-baseline justify-between gap-2">
+                                <dt className="text-muted-foreground flex min-w-0 items-baseline gap-1.5 truncate">
+                                  <Candy
+                                    className="size-3.5 shrink-0 translate-y-0.5"
+                                    style={{ color: "var(--endulzada)" }}
+                                    aria-hidden
+                                  />
+                                  <span className="truncate">
+                                    Próxima endulzada
+                                  </span>
                                 </dt>
-                                <dd className="ml-auto">
+                                <dd className="shrink-0 whitespace-nowrap">
                                   <GroupDate value={endulzada} />
                                 </dd>
                               </div>
                             )}
                             {reveal && (
-                              <div className="flex items-center gap-1.5">
-                                <Sparkles
-                                  className="size-3.5 shrink-0"
-                                  style={{ color: "var(--regalo)" }}
-                                  aria-hidden
-                                />
-                                <dt className="text-muted-foreground">
-                                  Descubrimiento
+                              <div className="flex items-baseline justify-between gap-2">
+                                <dt className="text-muted-foreground flex min-w-0 items-baseline gap-1.5 truncate">
+                                  <Sparkles
+                                    className="size-3.5 shrink-0 translate-y-0.5"
+                                    style={{ color: "var(--regalo)" }}
+                                    aria-hidden
+                                  />
+                                  <span className="truncate">Descubrimiento</span>
                                 </dt>
-                                <dd className="ml-auto">
+                                <dd className="shrink-0 whitespace-nowrap">
                                   <GroupDate value={reveal} />
                                 </dd>
                               </div>

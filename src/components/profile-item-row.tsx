@@ -77,7 +77,10 @@ export function ProfileItemRow({
             />
           </div>
 
-          <ImagePicker idPrefix={`pw-editar-${item.id}`} />
+          <ImagePicker
+            idPrefix={`pw-editar-${item.id}`}
+            existingUrl={item.image_url}
+          />
 
           <div className="flex gap-2">
             <SubmitButton className="flex-1" pendingLabel="Guardando…">

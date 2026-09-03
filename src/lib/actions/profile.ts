@@ -47,7 +47,7 @@ async function resolveItemImage(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
   formData: FormData,
-): Promise<{ value: string | null } | { error: string }> {
+): Promise<{ value: string | null | undefined } | { error: string }> {
   const file = formData.get("image");
   if (file instanceof File && file.size > 0) {
     const uploaded = await uploadImage(supabase, {
@@ -62,8 +62,11 @@ async function resolveItemImage(
     return { value: uploaded.url };
   }
 
+  if (formData.get("image_clear") === "1") return { value: null };
+
   const pasted = String(formData.get("image_url") ?? "").trim();
-  if (!pasted) return { value: null };
+  // Sin foto nueva ni orden de quitarla: se conserva la que tenga.
+  if (!pasted) return { value: undefined };
 
   const url = parseHttpUrl(pasted);
   if (!url) return { error: "Esa dirección de imagen no parece válida." };
@@ -167,7 +170,7 @@ export async function addProfileItem(
     item_name: itemName,
     url: parseHttpUrl(formData.get("url")),
     note: String(formData.get("note") ?? "").trim() || null,
-    image_url: image.value,
+    image_url: image.value ?? null,
   });
 
   if (error) return fail(toMessage(error, "No pudimos guardar el antojo."));
@@ -196,18 +199,10 @@ export async function updateProfileItem(
     .eq("id", itemId)
     .maybeSingle();
 
-  // Si no mandaron foto nueva ni dirección, se conserva la que tenía.
-  const sentImage =
-    (formData.get("image") instanceof File &&
-      (formData.get("image") as File).size > 0) ||
-    formData.get("image_url") !== null;
-
-  let imageUrl: string | null | undefined;
-  if (sentImage) {
-    const resolved = await resolveItemImage(supabase, user.id, formData);
-    if ("error" in resolved) return fail(resolved.error);
-    imageUrl = resolved.value;
-  }
+  // `resolveItemImage` ya distingue conservar / quitar / cambiar.
+  const resolved = await resolveItemImage(supabase, user.id, formData);
+  if ("error" in resolved) return fail(resolved.error);
+  const imageUrl = resolved.value;
 
   const { error } = await supabase
     .from("profile_wishlists")

@@ -17,14 +17,31 @@ const ALLOWED = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
  * Pegar es el camino que importa: uno copia la foto del producto de la tienda
  * y la suelta acá, sin pasar por descargar y volver a subir.
  *
- * El archivo (escogido o pegado) viaja como `image`; la dirección viaja como
- * `image_url` y se guarda tal cual, sin que el servidor la descargue — pedir
- * una URL cualquiera desde el servidor es una puerta a la red interna.
+ * ## El contrato con el servidor tiene TRES estados, no dos
+ *
+ * Antes este componente mandaba siempre `image_url`, vacío cuando no se había
+ * tocado nada — y el servidor leía ese vacío como "quítale la foto". Es decir
+ * que editar el nombre de un antojo le borraba la imagen, y encima el archivo
+ * se borraba de Storage. Por eso ahora:
+ *
+ *  - no se tocó nada  → no se manda ningún campo → el servidor **conserva**
+ *  - se quitó la foto → `image_clear=1`          → el servidor **borra**
+ *  - hay archivo o dirección → `image` / `image_url` → el servidor **cambia**
+ *
+ * "No mandar nada" y "mandar vacío" tienen que significar cosas distintas.
  */
-export function ImagePicker({ idPrefix }: { idPrefix: string }) {
+export function ImagePicker({
+  idPrefix,
+  existingUrl = null,
+}: {
+  idPrefix: string;
+  /** La foto que ya tiene el antojo, si se está editando. */
+  existingUrl?: string | null;
+}) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [urlValue, setUrlValue] = useState("");
+  const [cleared, setCleared] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showUrl, setShowUrl] = useState(false);
 
@@ -50,6 +67,7 @@ export function ImagePicker({ idPrefix }: { idPrefix: string }) {
     setPreview(URL.createObjectURL(file));
     // Una imagen sube y desplaza cualquier dirección escrita antes.
     setUrlValue("");
+    setCleared(false);
   }
 
   function clear() {
@@ -58,12 +76,16 @@ export function ImagePicker({ idPrefix }: { idPrefix: string }) {
     setUrlValue("");
     setError(null);
     if (fileRef.current) fileRef.current.value = "";
+    // Solo cuenta como "quitar" si de verdad había algo guardado.
+    setCleared(Boolean(existingUrl));
   }
 
-  const remoteUrl = !preview && /^https?:\/\/\S+$/i.test(urlValue.trim())
-    ? urlValue.trim()
-    : null;
-  const shown = preview ?? remoteUrl;
+  const pastedUrl =
+    !preview && /^https?:\/\/\S+$/i.test(urlValue.trim())
+      ? urlValue.trim()
+      : null;
+  const shown = preview ?? pastedUrl ?? (cleared ? null : existingUrl);
+  const isNew = Boolean(preview ?? pastedUrl);
 
   return (
     <div className="space-y-2">
@@ -95,6 +117,7 @@ export function ImagePicker({ idPrefix }: { idPrefix: string }) {
             event.preventDefault();
             setShowUrl(true);
             setUrlValue(text);
+            setCleared(false);
             setError(null);
           }
         }}
@@ -110,9 +133,15 @@ export function ImagePicker({ idPrefix }: { idPrefix: string }) {
               style={{ maxWidth: "none" }}
             />
             <span className="text-muted-foreground flex-1 text-xs">
-              {preview ? "Imagen lista para subir" : "Se usará esta dirección"}
+              {isNew ? "Foto nueva, lista para guardar" : "Foto actual"}
             </span>
-            <Button type="button" variant="ghost" size="icon-sm" onClick={clear} aria-label="Quitar la imagen">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={clear}
+              aria-label="Quitar la imagen"
+            >
               <X className="size-4" />
             </Button>
           </>
@@ -151,9 +180,18 @@ export function ImagePicker({ idPrefix }: { idPrefix: string }) {
           inputMode="url"
           placeholder="https://…/foto.jpg"
           value={urlValue}
-          onChange={(event) => setUrlValue(event.target.value)}
+          onChange={(event) => {
+            setUrlValue(event.target.value);
+            setCleared(false);
+          }}
           aria-label="Dirección de la imagen"
         />
+      )}
+
+      {cleared && (
+        <p className="text-muted-foreground text-xs">
+          Se va a quitar la foto al guardar.
+        </p>
       )}
 
       {error && <p className="text-destructive text-xs">{error}</p>}
@@ -169,8 +207,11 @@ export function ImagePicker({ idPrefix }: { idPrefix: string }) {
           if (file) acceptFile(file);
         }}
       />
-      {/* Solo se envía si no hay archivo: el archivo manda. */}
-      <input type="hidden" name="image_url" value={preview ? "" : urlValue.trim()} />
+
+      {/* Los dos campos van SOLO cuando hay algo que decir. Si no se tocó la
+          foto, el formulario no manda ninguno y el servidor la conserva. */}
+      {pastedUrl && <input type="hidden" name="image_url" value={pastedUrl} />}
+      {cleared && <input type="hidden" name="image_clear" value="1" />}
     </div>
   );
 }

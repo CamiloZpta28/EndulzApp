@@ -23,12 +23,16 @@ function parseType(value: FormDataEntryValue | null): WishlistType | null {
 }
 
 /**
- * La foto puede llegar de tres formas: archivo escogido, imagen pegada del
- * portapapeles (que también llega como archivo), o una dirección de internet.
- * El archivo manda sobre la dirección.
+ * Resuelve qué hacer con la foto. Tres resultados, no dos:
  *
- * Devuelve `undefined` cuando no hay nada que cambiar, para poder distinguir
- * "no tocaron la foto" de "la quitaron" (`null`).
+ *   `undefined` → no la tocaron, se conserva la que tenga
+ *   `null`      → la quitaron a propósito (`image_clear=1`)
+ *   string      → foto nueva (archivo subido o dirección pegada)
+ *
+ * Antes `image_url` llegaba siempre, vacío cuando no se había tocado nada, y
+ * eso se leía como "quítala": editar el nombre de un antojo le borraba la
+ * imagen y encima el archivo se iba de Storage. "No mandar nada" y "mandar
+ * vacío" tienen que significar cosas distintas.
  */
 async function resolveImage(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -49,12 +53,15 @@ async function resolveImage(
     return { value: result.url };
   }
 
+  // Quitarla es explícito.
+  if (formData.get("image_clear") === "1") return { value: null };
+
   const raw = formData.get("image_url");
-  // El campo ni vino en el formulario: no se toca la foto que ya tenía.
+  // Ningún campo de foto en el formulario: se conserva la que tenía.
   if (raw === null) return { value: undefined };
 
   const text = String(raw).trim();
-  if (!text) return { value: null };
+  if (!text) return { value: undefined };
 
   const url = parseHttpUrl(text);
   if (!url) return { error: "Esa dirección de imagen no parece válida." };
