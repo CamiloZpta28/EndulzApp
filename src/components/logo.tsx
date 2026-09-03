@@ -1,14 +1,28 @@
 import { cn } from "@/lib/utils";
 
 /**
- * El logo: una cajita de regalo con el moño hecho de dos caramelos.
+ * El logo: una paleta.
  *
- * Junta las dos mitades de la app en una sola figura — la caja es el regalo
- * grande, los caramelos del moño son la endulzada — y usa los tres colores de
- * marca. Formas macizas y nada por debajo de 2px de grosor, para que aguante
- * a 16px en la pestaña del navegador.
+ * El remolino es una sola línea gruesa, sin nada por debajo de 3 px de trazo,
+ * para que a 20 px (la pestaña del navegador) siga leyéndose como espiral y
+ * no como una manchita.
+ *
+ * `variant="onBrand"` invierte el caramelo a blanco: sobre el encabezado, que
+ * es del color de marca, un caramelo del mismo color desaparecería. El palito
+ * usa un neutro tibio que se ve tanto sobre blanco como sobre el degradado.
  */
-export function LogoMark({ className }: { className?: string }) {
+export function LogoMark({
+  className,
+  variant = "color",
+}: {
+  className?: string;
+  variant?: "color" | "onBrand";
+}) {
+  const candy = variant === "onBrand" ? "#fff" : "var(--primary)";
+  const swirl =
+    variant === "onBrand" ? "var(--primary)" : "var(--primary-foreground)";
+  const stick = variant === "onBrand" ? "rgba(255,255,255,.75)" : "oklch(0.72 0.03 60)";
+
   return (
     <svg
       viewBox="0 0 48 48"
@@ -16,32 +30,16 @@ export function LogoMark({ className }: { className?: string }) {
       aria-label="EndulzApp"
       className={cn("size-8", className)}
     >
-      {/* cuerpo de la caja */}
-      <rect x="7" y="20" width="34" height="21" rx="5" fill="var(--primary)" />
-      {/* cinta vertical */}
-      <rect
-        x="21.5"
-        y="20"
-        width="5"
-        height="21"
-        fill="var(--primary-foreground)"
-        opacity=".85"
+      <rect x="22" y="26" width="4" height="18" rx="2" fill={stick} />
+      <circle cx="24" cy="19" r="15" fill={candy} />
+      <path
+        d="M24 19 m0 -10 a10 10 0 1 1 -7.07 17.07 a7 7 0 1 0 9.9 -9.9 a4 4 0 1 1 -5.66 5.66"
+        fill="none"
+        stroke={swirl}
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        opacity=".9"
       />
-      {/* tapa */}
-      <rect x="5" y="16" width="38" height="8" rx="3" fill="var(--primary)" />
-      <rect
-        x="21.5"
-        y="16"
-        width="5"
-        height="8"
-        fill="var(--primary-foreground)"
-        opacity=".85"
-      />
-      {/* moño: dos caramelos, uno por cada lista */}
-      <circle cx="16" cy="11" r="7" fill="var(--endulzada)" />
-      <circle cx="32" cy="11" r="7" fill="var(--regalo)" />
-      {/* nudo */}
-      <circle cx="24" cy="13.5" r="3.5" fill="var(--primary)" />
     </svg>
   );
 }
@@ -51,18 +49,18 @@ export function Logo({
   className,
   markClassName,
   wordClassName,
+  variant = "color",
 }: {
   className?: string;
   markClassName?: string;
   wordClassName?: string;
+  variant?: "color" | "onBrand";
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
-      <LogoMark className={markClassName} />
+      <LogoMark className={markClassName} variant={variant} />
       <span
         className={cn(
-          // Baloo 2: redonda y con peso, para que el nombre suene dulce sin
-          // depender de la serif que usan los títulos.
           "font-logo text-xl leading-none font-extrabold tracking-tight",
           wordClassName,
         )}

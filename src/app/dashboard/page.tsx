@@ -43,7 +43,7 @@ export default async function DashboardPage() {
           ) : (
             <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {groups.map((group) => {
-                const endulzada = formatGroupDate(group.endulzada_at);
+                const endulzada = formatGroupDate(group.next_endulzada);
                 const reveal = formatGroupDate(group.reveal_at);
 
                 return (
@@ -102,6 +102,11 @@ export default async function DashboardPage() {
                                 />
                                 <dt className="text-muted-foreground">
                                   Siguiente endulzada
+                                  {group.endulzada_count > 1 && (
+                                    <span className="ml-1 opacity-70">
+                                      (de {group.endulzada_count})
+                                    </span>
+                                  )}
                                 </dt>
                                 <dd className="ml-auto font-medium">
                                   {endulzada}

@@ -1,10 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Candy, Pencil, Settings2, Sparkles, Trash2 } from "lucide-react";
+import { Pencil, Settings2, Sparkles, Trash2 } from "lucide-react";
 
 import { BudgetFields } from "@/components/budget-fields";
 import { EmojiPicker } from "@/components/emoji-picker";
+import { EndulzadaSchedule } from "@/components/endulzada-schedule";
 import { SubmitButton } from "@/components/submit-button";
 import { useActionToast } from "@/components/use-action-toast";
 import { Button } from "@/components/ui/button";
@@ -32,9 +33,12 @@ import type { Group } from "@/lib/types";
  */
 export function GroupSettingsDialog({
   group,
+  endulzadaDates = [],
   variant = "full",
 }: {
   group: Group;
+  /** Las fechas ya agendadas, en orden. */
+  endulzadaDates?: string[];
   variant?: "full" | "compact";
 }) {
   const [open, setOpen] = useState(false);
@@ -52,7 +56,7 @@ export function GroupSettingsDialog({
           variant === "compact" ? (
             <Button variant="ghost" size="sm">
               <Pencil className="size-3.5" aria-hidden />
-              Editar topes
+              Editar el parche
             </Button>
           ) : (
             <Button variant="outline" className="w-full">
@@ -94,31 +98,19 @@ export function GroupSettingsDialog({
             defaultRegalo={group.budget_regalo}
           />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="settings-endulzada-at" className="flex items-center gap-1.5">
-                <Candy className="size-3.5" style={{ color: "var(--endulzada)" }} aria-hidden />
-                Siguiente endulzada
-              </Label>
-              <Input
-                id="settings-endulzada-at"
-                name="endulzada_at"
-                type="date"
-                defaultValue={group.endulzada_at ?? ""}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-reveal-at" className="flex items-center gap-1.5">
-                <Sparkles className="size-3.5" style={{ color: "var(--regalo)" }} aria-hidden />
-                Descubrimiento
-              </Label>
-              <Input
-                id="settings-reveal-at"
-                name="reveal_at"
-                type="date"
-                defaultValue={group.reveal_at ?? ""}
-              />
-            </div>
+          <EndulzadaSchedule defaultDates={endulzadaDates} />
+
+          <div className="space-y-2">
+            <Label htmlFor="settings-reveal-at" className="flex items-center gap-1.5">
+              <Sparkles className="size-3.5" style={{ color: "var(--regalo)" }} aria-hidden />
+              Fecha del descubrimiento
+            </Label>
+            <Input
+              id="settings-reveal-at"
+              name="reveal_at"
+              type="date"
+              defaultValue={group.reveal_at ?? ""}
+            />
           </div>
 
           <SubmitButton className="w-full" pendingLabel="Guardando…">

@@ -171,3 +171,37 @@ export async function deleteWishlistItem(
   revalidatePath(`/g/${groupId}`);
   return done("Antojo eliminado.");
 }
+
+/**
+ * Guarda el orden de una sección: arriba lo que más se quiere.
+ *
+ * Firma simple (no `(prev, formData)`) porque las flechitas la llaman
+ * directo dentro de un `startTransition`, no desde un `<form>`.
+ *
+ * Recibe el orden completo y no "sube este uno": así la misma acción sirve
+ * para las flechas de hoy y para arrastrar después, y nunca quedan dos
+ * antojos peleando por el mismo puesto.
+ */
+export async function reorderWishlist(input: {
+  groupId: string;
+  memberId: string;
+  type: WishlistType;
+  ids: string[];
+}): Promise<ActionState> {
+  const { groupId, memberId, type, ids } = input;
+
+  if (!memberId || !type) return fail("Falta información de la lista.");
+  if (ids.length === 0) return fail("No hay nada que ordenar.");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reorder_wishlist", {
+    p_member: memberId,
+    p_type: type,
+    p_ids: ids,
+  });
+
+  if (error) return fail(toMessage(error, "No pudimos guardar el orden."));
+
+  revalidatePath(`/g/${groupId}`);
+  return done("Orden actualizado.");
+}

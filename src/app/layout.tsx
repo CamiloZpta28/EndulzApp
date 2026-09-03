@@ -1,33 +1,26 @@
 import type { Metadata, Viewport } from "next";
-import { Baloo_2, Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Baloo_2, Plus_Jakarta_Sans } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 /**
- * Fraunces para los títulos: una serif variable con un eje `SOFT` que le da
- * el aire dulce del nombre sin volverse caricatura. Plus Jakarta Sans para el
- * cuerpo, que es donde importa la legibilidad en pantalla chiquita.
+ * Baloo 2 para títulos y para el nombre de la app: redonda y con peso, que es
+ * la estética que pide un parche de dulces. Antes había una serif (Fraunces)
+ * y se sentía de revista, no de app. Plus Jakarta Sans para el cuerpo, donde
+ * lo que importa es leer cómodo en pantalla chiquita.
  */
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  axes: ["SOFT"],
-  display: "swap",
-});
-
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
   display: "swap",
 });
 
-/** Solo para el nombre de la app: redonda y con peso, se lee como un dulce. */
 const baloo = Baloo_2({
   variable: "--font-baloo",
   subsets: ["latin"],
-  weight: ["600", "800"],
+  weight: ["500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -54,7 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="es"
       suppressHydrationWarning
-      className={`${jakarta.variable} ${fraunces.variable} ${baloo.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${baloo.variable} h-full antialiased`}
     >
       <body className="bg-background text-foreground flex min-h-full flex-col">
         <ThemeProvider

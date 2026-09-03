@@ -33,9 +33,7 @@ export type Group = {
   budget_endulzada: number;
   budget_regalo: number;
   currency: string;
-  /** Próxima entrega de endulzada (`YYYY-MM-DD`). */
-  endulzada_at: string | null;
-  /** El día del descubrimiento. */
+  /** El día del descubrimiento (`YYYY-MM-DD`). */
   reveal_at: string | null;
   drawn_at: string | null;
   created_at: string;
@@ -47,6 +45,7 @@ export type Member = {
   group_id: string;
   user_id: string | null;
   shadow_name: string;
+  nickname: string | null;
   created_at: string;
 };
 
@@ -59,6 +58,8 @@ export type ProfileWishlistItem = {
   url: string | null;
   image_url: string | null;
   note: string | null;
+  /** Prioridad: 1 es lo que más quiere. `null` = sin ordenar, va al final. */
+  sort_order: number | null;
   created_at: string;
 };
 
@@ -70,6 +71,8 @@ export type WishlistItem = {
   url: string | null;
   image_url: string | null;
   note: string | null;
+  /** Prioridad: 1 es lo que más quiere. `null` = sin ordenar, va al final. */
+  sort_order: number | null;
   created_at: string;
 };
 
@@ -82,11 +85,22 @@ export type Assignment = {
   avatar_url: string | null;
 };
 
+/** Una endulzada agendada. */
+export type GroupEndulzada = {
+  id: string;
+  group_id: string;
+  happens_on: string;
+  created_at: string;
+};
+
 /** `public.group_roster()` — nombres y fotos de quienes están en el parche. */
 export type RosterMember = {
   member_id: string;
   user_id: string | null;
+  /** Ya resuelto: apodo del parche, si no el nombre del perfil. */
   name: string;
+  /** El apodo crudo, para precargar el campo. `null` = no tiene. */
+  nickname: string | null;
   avatar_url: string | null;
   birthday: string | null;
   is_me: boolean;
@@ -146,7 +160,9 @@ export type GroupSummary = {
   budget_endulzada: number;
   budget_regalo: number;
   currency: string;
-  endulzada_at: string | null;
+  /** La próxima endulzada que no ha pasado; `null` si ya pasaron todas. */
+  next_endulzada: string | null;
+  endulzada_count: number;
   reveal_at: string | null;
   member_count: number;
   /** Hasta 6, en orden de llegada. */
@@ -177,7 +193,6 @@ export type Database = {
           budget_regalo?: number;
           currency?: string;
           emoji?: string | null;
-          endulzada_at?: string | null;
           reveal_at?: string | null;
         };
         Update: {
@@ -186,7 +201,6 @@ export type Database = {
           budget_regalo?: number;
           currency?: string;
           emoji?: string | null;
-          endulzada_at?: string | null;
           reveal_at?: string | null;
         };
         Relationships: [];
@@ -194,7 +208,13 @@ export type Database = {
       members: {
         Row: Member;
         Insert: { group_id: string; shadow_name: string };
-        Update: { shadow_name?: string };
+        Update: { shadow_name?: string; nickname?: string | null };
+        Relationships: [];
+      };
+      group_endulzadas: {
+        Row: GroupEndulzada;
+        Insert: { group_id: string; happens_on: string };
+        Update: { happens_on?: string };
         Relationships: [];
       };
       profile_wishlists: {
@@ -260,6 +280,18 @@ export type Database = {
       get_join_details: { Args: { p_code: string }; Returns: JoinDetails[] };
       join_group: { Args: { p_code: string }; Returns: string };
       rotate_invite_code: { Args: { p_group: string }; Returns: string };
+      set_group_endulzadas: {
+        Args: { p_group: string; p_dates: string[] };
+        Returns: number;
+      };
+      reorder_wishlist: {
+        Args: { p_member: string; p_type: WishlistType; p_ids: string[] };
+        Returns: number;
+      };
+      reorder_profile_wishlist: {
+        Args: { p_type: WishlistType; p_ids: string[] };
+        Returns: number;
+      };
       import_profile_wishlist: {
         Args: { p_member: string; p_type?: WishlistType | null };
         Returns: number;

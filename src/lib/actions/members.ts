@@ -75,3 +75,33 @@ export async function removeMember(
   revalidatePath(`/g/${groupId}`);
   return done("Parcero eliminado del parche.");
 }
+
+/**
+ * El apodo con el que apareces en ESTE parche.
+ *
+ * Vacío = quítalo y vuelve a mostrarme como en mi perfil. La política
+ * "members: rename" solo deja tocar tu propia fila (o cualquiera si eres
+ * admin), y el grant de columna limita la escritura a `nickname`.
+ */
+export async function updateNickname(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const groupId = String(formData.get("group_id") ?? "");
+  const memberId = String(formData.get("member_id") ?? "");
+  const raw = String(formData.get("nickname") ?? "").trim();
+  if (!memberId) return fail("Falta tu puesto en el parche.");
+  if (raw.length > 40) return fail("El apodo no puede pasar de 40 caracteres.");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("members")
+    .update({ nickname: raw || null })
+    .eq("id", memberId);
+
+  if (error) return fail(toMessage(error, "No pudimos guardar el apodo."));
+
+  revalidatePath(`/g/${groupId}`);
+  revalidatePath("/dashboard");
+  return done(raw ? `Ahora apareces como ${raw} en este parche.` : "Apodo quitado.");
+}

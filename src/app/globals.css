@@ -9,8 +9,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-heading: var(--font-fraunces), Georgia, ui-serif, serif;
-  --font-logo: var(--font-baloo), var(--font-jakarta), ui-rounded, sans-serif;
+  --font-heading: var(--font-baloo), ui-rounded, "Segoe UI", sans-serif;
+  --font-logo: var(--font-baloo), ui-rounded, "Segoe UI", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -132,8 +132,7 @@
   h1,
   h2,
   h3 {
-    @apply font-heading;
-    font-variation-settings: "SOFT" 40;
+    @apply font-heading font-bold;
     letter-spacing: -0.015em;
   }
 }

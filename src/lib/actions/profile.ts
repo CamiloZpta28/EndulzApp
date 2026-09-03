@@ -176,6 +176,88 @@ export async function addProfileItem(
   return done("Agregado a tu lista base.");
 }
 
+/** Editar un antojo de la lista base — antes solo se podía borrar y rehacer. */
+export async function updateProfileItem(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const itemId = String(formData.get("item_id") ?? "");
+  const itemName = String(formData.get("item_name") ?? "").trim();
+  if (!itemId) return fail("Falta el antojo.");
+  if (!itemName) return fail("El nombre no puede quedar vacío.");
+
+  const supabase = await createClient();
+  const user = await getSessionUser(supabase);
+  if (!user) return fail("Inicia sesión para editar tu lista.");
+
+  const { data: before } = await supabase
+    .from("profile_wishlists")
+    .select("image_url")
+    .eq("id", itemId)
+    .maybeSingle();
+
+  // Si no mandaron foto nueva ni dirección, se conserva la que tenía.
+  const sentImage =
+    (formData.get("image") instanceof File &&
+      (formData.get("image") as File).size > 0) ||
+    formData.get("image_url") !== null;
+
+  let imageUrl: string | null | undefined;
+  if (sentImage) {
+    const resolved = await resolveItemImage(supabase, user.id, formData);
+    if ("error" in resolved) return fail(resolved.error);
+    imageUrl = resolved.value;
+  }
+
+  const { error } = await supabase
+    .from("profile_wishlists")
+    .update({
+      item_name: itemName,
+      url: parseHttpUrl(formData.get("url")),
+      note: String(formData.get("note") ?? "").trim() || null,
+      ...(imageUrl === undefined ? {} : { image_url: imageUrl }),
+    })
+    .eq("id", itemId);
+
+  if (error) return fail(toMessage(error, "No pudimos actualizar el antojo."));
+
+  if (
+    imageUrl !== undefined &&
+    before?.image_url &&
+    before.image_url !== imageUrl
+  ) {
+    await removeUploaded(supabase, ITEM_BUCKET, before.image_url);
+  }
+
+  revalidatePath("/perfil");
+  return done("Antojo actualizado.");
+}
+
+/**
+ * Guarda el orden de una sección de la lista base. Firma simple: la llaman
+ * las flechitas dentro de un `startTransition`, no un `<form>`.
+ */
+export async function reorderProfileWishlist(input: {
+  type: WishlistType;
+  ids: string[];
+}): Promise<ActionState> {
+  const { type, ids } = input;
+
+  if (!type) return fail("Falta la sección.");
+  if (ids.length === 0) return fail("No hay nada que ordenar.");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reorder_profile_wishlist", {
+    p_type: type,
+    p_ids: ids,
+  });
+
+  if (error) return fail(toMessage(error, "No pudimos guardar el orden."));
+
+  revalidatePath("/perfil");
+  return done("Orden actualizado.");
+}
+
 export async function deleteProfileItem(
   _prev: ActionState,
   formData: FormData,

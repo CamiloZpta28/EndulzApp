@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Lock, Users } from "lucide-react";
+import { Candy, Lock, Sparkles, Users } from "lucide-react";
 
 import { AppHeader } from "@/components/app-header";
 import { AssignmentReveal } from "@/components/assignment-reveal";
@@ -9,6 +9,7 @@ import { DrawPanel } from "@/components/draw-panel";
 import { GroupSettingsDialog } from "@/components/group-settings-dialog";
 import { ImportWishlistButton } from "@/components/import-wishlist-button";
 import { InviteCard } from "@/components/invite-card";
+import { NicknameDialog } from "@/components/nickname-dialog";
 import { RosterList } from "@/components/roster-list";
 import { Shell } from "@/components/shell";
 import { WishlistSection } from "@/components/wishlist-section";
@@ -17,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getGroupPageData, getProfile, requireUser } from "@/lib/db";
 import { getSiteOrigin } from "@/lib/site";
-import { displayName, groupByType } from "@/lib/format";
+import { displayName, formatGroupDate, groupByType } from "@/lib/format";
 
 export default async function GroupPage({
   params,
@@ -44,6 +45,7 @@ export default async function GroupPage({
     myItems,
     targetItems,
     profileItemCount,
+    endulzadas,
   } = data;
   if (!myMember && !isAdmin) notFound();
 
@@ -57,7 +59,9 @@ export default async function GroupPage({
 
   return (
     <>
-      <AutoRefresh />
+      {/* Sin sortear el ritmo es más corto: cuando el admin sortea, a los
+          demás les tiene que aparecer casi de una. */}
+      <AutoRefresh intervalMs={group.status === "pending" ? 8000 : 30000} />
       <AppHeader
         title={group.name}
         emoji={group.emoji}
@@ -74,7 +78,11 @@ export default async function GroupPage({
             group={group}
             action={
               isAdmin ? (
-                <GroupSettingsDialog group={group} variant="compact" />
+                <GroupSettingsDialog
+                  group={group}
+                  endulzadaDates={endulzadas.map((e) => e.happens_on)}
+                  variant="compact"
+                />
               ) : null
             }
           />
@@ -195,6 +203,53 @@ export default async function GroupPage({
                 />
               )}
 
+              {(endulzadas.length > 0 || group.reveal_at) && (
+                <div className="bg-card space-y-2 rounded-xl border p-4">
+                  <h3 className="text-sm font-semibold">Fechas del parche</h3>
+                  <ul className="space-y-1.5 text-sm">
+                    {endulzadas.map((endulzada, index) => (
+                      <li key={endulzada.id} className="flex items-center gap-2">
+                        <Candy
+                          className="size-3.5 shrink-0"
+                          style={{ color: "var(--endulzada)" }}
+                          aria-hidden
+                        />
+                        <span className="text-muted-foreground">
+                          Endulzada {index + 1}
+                        </span>
+                        <span className="ml-auto font-medium">
+                          {formatGroupDate(endulzada.happens_on)}
+                        </span>
+                      </li>
+                    ))}
+                    {group.reveal_at && (
+                      <li className="flex items-center gap-2 border-t pt-1.5">
+                        <Sparkles
+                          className="size-3.5 shrink-0"
+                          style={{ color: "var(--regalo)" }}
+                          aria-hidden
+                        />
+                        <span className="text-muted-foreground">
+                          Descubrimiento
+                        </span>
+                        <span className="ml-auto font-medium">
+                          {formatGroupDate(group.reveal_at)}
+                        </span>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              {myMember && (
+                <NicknameDialog
+                  groupId={group.id}
+                  memberId={myMember.member_id}
+                  currentNickname={myMember.nickname}
+                  profileName={me.name}
+                />
+              )}
+
               <RosterList
                 groupId={group.id}
                 members={roster}
@@ -210,7 +265,10 @@ export default async function GroupPage({
                       status={group.status}
                       memberCount={roster.length}
                     />
-                    <GroupSettingsDialog group={group} />
+                    <GroupSettingsDialog
+                      group={group}
+                      endulzadaDates={endulzadas.map((e) => e.happens_on)}
+                    />
                   </div>
                 </>
               ) : (

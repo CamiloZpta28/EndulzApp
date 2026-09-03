@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import type {
   Assignment,
   Group,
+  GroupEndulzada,
   GroupSummary,
   JoinDetails,
   JoinPreview,
@@ -60,6 +61,8 @@ export async function getProfileWishlist(): Promise<ProfileWishlistItem[]> {
   const { data, error } = await supabase
     .from("profile_wishlists")
     .select("*")
+    // Prioridad primero; lo que nunca se ordenó va al final por antigüedad.
+    .order("sort_order", { ascending: true, nullsFirst: false })
     .order("created_at");
   if (error) throw error;
   return data ?? [];
@@ -130,7 +133,22 @@ export async function getWishlist(memberId: string): Promise<WishlistItem[]> {
     .from("wishlists")
     .select("*")
     .eq("member_id", memberId)
+    .order("sort_order", { ascending: true, nullsFirst: false })
     .order("created_at");
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Las endulzadas agendadas del parche, de la más próxima a la más lejana. */
+export async function getEndulzadas(
+  groupId: string,
+): Promise<GroupEndulzada[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("group_endulzadas")
+    .select("*")
+    .eq("group_id", groupId)
+    .order("happens_on");
   if (error) throw error;
   return data ?? [];
 }
@@ -179,6 +197,7 @@ export type GroupPageData = {
   myItems: WishlistItem[];
   targetItems: WishlistItem[];
   profileItemCount: number;
+  endulzadas: GroupEndulzada[];
 };
 
 /** One call for everything `/g/[id]` renders. */
@@ -186,9 +205,10 @@ export async function getGroupPageData(
   groupId: string,
   userId: string,
 ): Promise<GroupPageData | null> {
-  const [group, roster] = await Promise.all([
+  const [group, roster, endulzadas] = await Promise.all([
     getGroup(groupId),
     getRoster(groupId),
+    getEndulzadas(groupId),
   ]);
   if (!group) return null;
 
@@ -214,5 +234,6 @@ export async function getGroupPageData(
     myItems,
     targetItems,
     profileItemCount: profileItems.length,
+    endulzadas,
   };
 }

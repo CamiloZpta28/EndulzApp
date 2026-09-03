@@ -154,16 +154,28 @@ export function WishlistSection({
           {editable ? meta.hint : "Todavía no ha puesto nada por acá."}
         </p>
       ) : (
-        <ul className="space-y-2">
-          {items.map((item) => (
-            <WishlistItemRow
-              key={item.id}
-              item={item}
-              groupId={groupId}
-              editable={editable}
-            />
-          ))}
-        </ul>
+        <>
+          {editable && items.length > 1 && (
+            <p className="text-muted-foreground px-1 text-xs">
+              Arriba lo que más quieres — usa las flechitas para acomodarlo.
+            </p>
+          )}
+          <ul className="space-y-2">
+            {items.map((item, index) => (
+              <WishlistItemRow
+                key={item.id}
+                item={item}
+                groupId={groupId}
+                editable={editable}
+                priority={
+                  items.length > 1
+                    ? { ids: items.map((i) => i.id), index, memberId }
+                    : undefined
+                }
+              />
+            ))}
+          </ul>
+        </>
       )}
     </section>
   );

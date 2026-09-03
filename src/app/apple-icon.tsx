@@ -24,13 +24,15 @@ export default function AppleIcon() {
         }}
       >
         <svg width="124" height="124" viewBox="0 0 48 48">
-          <rect x="7" y="20" width="34" height="21" rx="5" fill="#fff" />
-          <rect x="21.5" y="20" width="5" height="21" fill="#e0475f" />
-          <rect x="5" y="16" width="38" height="8" rx="3" fill="#fff" />
-          <rect x="21.5" y="16" width="5" height="8" fill="#e0475f" />
-          <circle cx="16" cy="11" r="7" fill="#f0a02c" />
-          <circle cx="32" cy="11" r="7" fill="#8b6ef0" />
-          <circle cx="24" cy="13.5" r="3.5" fill="#fff" />
+          <rect x="22" y="26" width="4" height="18" rx="2" fill="rgba(255,255,255,.8)" />
+          <circle cx="24" cy="19" r="15" fill="#fff" />
+          <path
+            d="M24 19 m0 -10 a10 10 0 1 1 -7.07 17.07 a7 7 0 1 0 9.9 -9.9 a4 4 0 1 1 -5.66 5.66"
+            fill="none"
+            stroke="#e0475f"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+          />
         </svg>
       </div>
     ),

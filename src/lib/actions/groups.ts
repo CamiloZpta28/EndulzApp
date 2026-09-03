@@ -20,6 +20,14 @@ function parseEmoji(value: FormDataEntryValue | null) {
   return points.length <= 8 ? points.join("") : points.slice(0, 8).join("");
 }
 
+/** `YYYY-MM-DD`, o `null`. Cualquier cosa rara se descarta en vez de guardarse. */
+function parseDate(value: FormDataEntryValue | null) {
+  const raw = String(value ?? "").trim();
+  if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const date = new Date(`${raw}T12:00:00Z`);
+  return Number.isNaN(date.getTime()) ? null : raw;
+}
+
 /** Solo códigos que la app conoce; cualquier otro cae al de por defecto. */
 function parseCurrency(value: FormDataEntryValue | null) {
   const code = String(value ?? "").toUpperCase();
@@ -71,14 +79,33 @@ export async function updateGroup(
       budget_regalo: parseMoney(formData.get("budget_regalo")),
       currency: parseCurrency(formData.get("currency")),
       emoji: parseEmoji(formData.get("emoji")),
+      // Estaba faltando: el formulario mandaba la fecha y esta acción no la
+      // leía, así que nunca se guardaba y la tarjeta no tenía qué mostrar.
+      reveal_at: parseDate(formData.get("reveal_at")),
     })
     .eq("id", groupId);
 
   if (error) return fail(toMessage(error, "No pudimos guardar los cambios."));
 
+  // El calendario de endulzadas vive en su propia tabla; se reemplaza entero
+  // con un RPC para que no quede a medias.
+  const dates = formData
+    .getAll("endulzada_dates")
+    .map((value) => parseDate(value))
+    .filter((value): value is string => value !== null);
+
+  const { error: datesError } = await supabase.rpc("set_group_endulzadas", {
+    p_group: groupId,
+    p_dates: dates,
+  });
+
+  if (datesError) {
+    return fail(toMessage(datesError, "No pudimos guardar las endulzadas."));
+  }
+
   revalidatePath(`/g/${groupId}`);
   revalidatePath("/dashboard");
-  return done("Listo, presupuestos actualizados.");
+  return done("Listo, parche actualizado.");
 }
 
 /**

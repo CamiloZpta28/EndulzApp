@@ -1,17 +1,17 @@
 "use client";
 
-import Image from "next/image";
 import { useActionState, useRef, useState } from "react";
-import { Candy, ExternalLink, Gift, Plus, Trash2 } from "lucide-react";
+import { Candy, Gift, Plus } from "lucide-react";
 
 import { ImagePicker } from "@/components/image-picker";
+import { ProfileItemRow } from "@/components/profile-item-row";
 import { SubmitButton } from "@/components/submit-button";
 import { useActionToast } from "@/components/use-action-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { addProfileItem, deleteProfileItem } from "@/lib/actions/profile";
+import { addProfileItem } from "@/lib/actions/profile";
 import { idle } from "@/lib/actions/types";
 import type { ProfileWishlistItem, WishlistType } from "@/lib/types";
 
@@ -53,13 +53,10 @@ export function ProfileWishlist({
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [addState, addAction] = useActionState(addProfileItem, idle);
-  const [deleteState, deleteAction] = useActionState(deleteProfileItem, idle);
-
   useActionToast(addState, () => {
     formRef.current?.reset();
     setOpen(false);
   });
-  useActionToast(deleteState);
 
   return (
     <section className="space-y-3">
@@ -139,55 +136,26 @@ export function ProfileWishlist({
       {items.length === 0 ? (
         <p className="text-muted-foreground px-1 text-sm">{meta.hint}</p>
       ) : (
-        <ul className="space-y-2">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="bg-card flex items-start gap-3 rounded-xl border p-3"
-            >
-              {item.image_url && (
-                <Image
-                  src={item.image_url}
-                  alt=""
-                  width={56}
-                  height={56}
-                  unoptimized
-                  className="size-14 shrink-0 rounded-lg object-cover"
-                />
-              )}
-
-              <div className="min-w-0 flex-1 space-y-1">
-                <p className="leading-snug font-medium">{item.item_name}</p>
-                {item.note && (
-                  <p className="text-muted-foreground text-xs">{item.note}</p>
-                )}
-                {item.url && (
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary inline-flex items-center gap-1 text-xs underline-offset-4 hover:underline"
-                  >
-                    Ver el link
-                    <ExternalLink className="size-3" aria-hidden />
-                  </a>
-                )}
-              </div>
-
-              <form action={deleteAction} className="shrink-0">
-                <input type="hidden" name="item_id" value={item.id} />
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Quitar ${item.item_name}`}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </form>
-            </li>
-          ))}
-        </ul>
+        <>
+          {items.length > 1 && (
+            <p className="text-muted-foreground px-1 text-xs">
+              Arriba lo que más quieres — usa las flechitas para acomodarlo.
+            </p>
+          )}
+          <ul className="space-y-2">
+            {items.map((item, index) => (
+              <ProfileItemRow
+                key={item.id}
+                item={item}
+                priority={
+                  items.length > 1
+                    ? { ids: items.map((i) => i.id), index }
+                    : undefined
+                }
+              />
+            ))}
+          </ul>
+        </>
       )}
     </section>
   );
