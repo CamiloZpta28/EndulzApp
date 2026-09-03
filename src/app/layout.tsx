@@ -29,6 +29,18 @@ export const metadata: Metadata = {
   description:
     "Organiza el amigo secreto del grupo: participantes, presupuestos, listas de antojos y el sorteo, sin trampas.",
   applicationName: "EndulzApp",
+  /**
+   * iOS standalone no mira `theme-color`: pinta la barra de estado según
+   * `statusBarStyle`. `black-translucent` deja que la página dibuje por
+   * debajo, y el `pt-[env(safe-area-inset-top)]` del encabezado la cubre con
+   * el degradado. Sin esto, en iPhone la franja seguiría ahí aunque en
+   * Android ya esté bien.
+   */
+  appleWebApp: {
+    capable: true,
+    title: "EndulzApp",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {

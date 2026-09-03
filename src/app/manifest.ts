@@ -13,7 +13,9 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/dashboard",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#fdf7f7",
+    // El color del splash al abrir la app instalada: también de marca,
+    // para que no haya un destello claro antes del encabezado.
+    background_color: "#e0475f",
     theme_color: "#e0475f",
     lang: "es-CO",
     icons: [
