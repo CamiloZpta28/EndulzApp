@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Pencil, Settings2, Trash2 } from "lucide-react";
 
 import { BudgetFields } from "@/components/budget-fields";
+import { EmojiPicker } from "@/components/emoji-picker";
 import { SubmitButton } from "@/components/submit-button";
 import { useActionToast } from "@/components/use-action-toast";
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,8 @@ export function GroupSettingsDialog({
         <DialogHeader>
           <DialogTitle>Ajustes del parche</DialogTitle>
           <DialogDescription>
-            Los topes se pueden cambiar incluso después del sorteo.
+            El nombre, el emoji y los topes se pueden cambiar cuando quieras,
+            incluso después del sorteo.
           </DialogDescription>
         </DialogHeader>
 
@@ -83,6 +85,8 @@ export function GroupSettingsDialog({
               defaultValue={group.name}
             />
           </div>
+
+          <EmojiPicker defaultValue={group.emoji} />
 
           <BudgetFields
             defaultCurrency={group.currency}

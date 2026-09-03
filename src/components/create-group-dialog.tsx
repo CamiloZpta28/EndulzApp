@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Plus } from "lucide-react";
 
 import { BudgetFields } from "@/components/budget-fields";
+import { EmojiPicker } from "@/components/emoji-picker";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,8 @@ export function CreateGroupDialog() {
               placeholder="Camilo"
             />
           </div>
+
+          <EmojiPicker />
 
           <BudgetFields />
 

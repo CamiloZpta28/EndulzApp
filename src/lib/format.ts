@@ -4,7 +4,7 @@
  * breaks the build.
  */
 import { DEFAULT_CURRENCY, currencyMeta } from "@/lib/currencies";
-import type { WishlistItem, WishlistType } from "@/lib/types";
+import type { WishlistType } from "@/lib/types";
 
 /**
  * Monto con símbolo y separadores de miles de la moneda que corresponde.
@@ -33,12 +33,30 @@ export function displayName(member: {
   return member.display_name?.trim() || member.shadow_name;
 }
 
-/** Split one wishlist into the two sections the UI renders. */
-export function groupByType(items: WishlistItem[]) {
-  const buckets: Record<WishlistType, WishlistItem[]> = {
-    endulzada: [],
-    regalo: [],
-  };
+/**
+ * Split one wishlist into the two sections the UI renders. Es genérico porque
+ * sirve tanto para la lista de un parche como para la lista base del perfil,
+ * que tienen columnas distintas pero el mismo `type`.
+ */
+export function groupByType<T extends { type: WishlistType }>(items: T[]) {
+  const buckets: Record<WishlistType, T[]> = { endulzada: [], regalo: [] };
   for (const item of items) buckets[item.type].push(item);
   return buckets;
+}
+
+/**
+ * Cumpleaños como "14 de marzo" — sin el año, que no es asunto del parche.
+ * La fecha llega como `YYYY-MM-DD`, así que se fija en UTC: interpretarla en
+ * la zona local correría el día hacia atrás en cualquier huso al oeste de
+ * Greenwich, Colombia incluida.
+ */
+export function formatBirthday(value?: string | null) {
+  if (!value) return null;
+  const date = new Date(`${value}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("es-CO", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(date);
 }

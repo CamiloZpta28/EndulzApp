@@ -4,27 +4,27 @@
  * Two rules hold throughout:
  *  1. Reads run with the caller's session, so RLS is the real authority. The
  *     checks below shape the UI; they are not the security boundary.
- *  2. `members` is never selected with `*` — `assigned_to` and `claim_token`
- *     have no column grant, so `*` would be rejected by Postgres.
+ *  2. Anything that has to combine `members` with `profiles` goes through an
+ *     RPC, because `profiles` only lets you read your own row — group-mates'
+ *     names and photos come from `public.group_roster`.
  */
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import type {
-  AdminMember,
   Assignment,
-  ClaimPreview,
   Group,
   GroupSummary,
-  Member,
+  JoinDetails,
+  JoinPreview,
   Profile,
+  ProfileWishlistItem,
+  RosterMember,
   WishlistItem,
 } from "@/lib/types";
 
-const MEMBER_COLUMNS = "id, group_id, user_id, shadow_name, created_at";
-
 /* -------------------------------------------------------------------------- */
-/* Session                                                                    */
+/* Session and profile                                                        */
 /* -------------------------------------------------------------------------- */
 
 /** The signed-in user, or `null`. Never throws. */
@@ -56,6 +56,17 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   return data ?? null;
 }
 
+/** La lista base del perfil, la que se importa a los parches. */
+export async function getProfileWishlist(): Promise<ProfileWishlistItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profile_wishlists")
+    .select("*")
+    .order("created_at");
+  if (error) throw error;
+  return data ?? [];
+}
+
 /* -------------------------------------------------------------------------- */
 /* Groups                                                                     */
 /* -------------------------------------------------------------------------- */
@@ -82,42 +93,14 @@ export async function getGroup(groupId: string): Promise<Group | null> {
   return data ?? null;
 }
 
-/** The roster every participant may see: seat names, nothing else. */
-export async function getRoster(groupId: string): Promise<Member[]> {
+/** Roster con nombre, foto y cumpleaños de cada integrante. */
+export async function getRoster(groupId: string): Promise<RosterMember[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("members")
-    .select(MEMBER_COLUMNS)
-    .eq("group_id", groupId)
-    .order("created_at");
-  if (error) throw error;
-  return data ?? [];
-}
-
-/** The admin roster, with invite tokens. Rejected by Postgres for non-admins. */
-export async function getAdminRoster(groupId: string): Promise<AdminMember[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("admin_group_members", {
+  const { data, error } = await supabase.rpc("group_roster", {
     p_group: groupId,
   });
   if (error) throw error;
   return data ?? [];
-}
-
-/** My own seat in a group, if I hold one. */
-export async function getMyMember(
-  groupId: string,
-  userId: string,
-): Promise<Member | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("members")
-    .select(MEMBER_COLUMNS)
-    .eq("group_id", groupId)
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (error) throw error;
-  return data ?? null;
 }
 
 /**
@@ -155,21 +138,31 @@ export async function getWishlist(memberId: string): Promise<WishlistItem[]> {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Invites                                                                    */
+/* Invitaciones                                                               */
 /* -------------------------------------------------------------------------- */
 
-/** Anonymous-safe peek at an invite link: group name and seat label only. */
-export async function getClaimPreview(
-  token: string,
-): Promise<ClaimPreview | null> {
+/** Sin sesión: nombre, emoji y cuántos van. Deliberadamente sin nombres. */
+export async function getJoinPreview(code: string): Promise<JoinPreview | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_claim_preview", {
-    p_token: token,
+  const { data, error } = await supabase.rpc("get_join_preview", {
+    p_code: code,
   });
   if (error) {
-    // An unknown token is a legitimate miss, so this page stays friendly
-    // rather than throwing — but the reason belongs in the server log.
-    console.error("get_claim_preview failed:", error.message);
+    // Un código inexistente es una falla legítima de la ruta, no un 500.
+    console.error("get_join_preview failed:", error.message);
+    return null;
+  }
+  return data?.[0] ?? null;
+}
+
+/** Con sesión: la pantalla de "¿quieres unirte?", ya con los integrantes. */
+export async function getJoinDetails(code: string): Promise<JoinDetails | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_join_details", {
+    p_code: code,
+  });
+  if (error) {
+    console.error("get_join_details failed:", error.message);
     return null;
   }
   return data?.[0] ?? null;
@@ -181,12 +174,13 @@ export async function getClaimPreview(
 
 export type GroupPageData = {
   group: Group;
-  roster: Member[];
-  myMember: Member | null;
+  roster: RosterMember[];
+  myMember: RosterMember | null;
   isAdmin: boolean;
   assignment: Assignment | null;
   myItems: WishlistItem[];
   targetItems: WishlistItem[];
+  profileItemCount: number;
 };
 
 /** One call for everything `/g/[id]` renders. */
@@ -200,16 +194,27 @@ export async function getGroupPageData(
   ]);
   if (!group) return null;
 
-  const myMember = roster.find((m) => m.user_id === userId) ?? null;
+  const myMember = roster.find((m) => m.is_me) ?? null;
   const isAdmin = group.admin_id === userId;
 
   const assignment =
     group.status === "drawn" && myMember ? await getMyAssignment(groupId) : null;
 
-  const [myItems, targetItems] = await Promise.all([
-    myMember ? getWishlist(myMember.id) : Promise.resolve([]),
+  const [myItems, targetItems, profileItems] = await Promise.all([
+    myMember ? getWishlist(myMember.member_id) : Promise.resolve([]),
     assignment ? getWishlist(assignment.member_id) : Promise.resolve([]),
+    // Solo para saber si tiene sentido ofrecer el botón de importar.
+    myMember ? getProfileWishlist() : Promise.resolve([]),
   ]);
 
-  return { group, roster, myMember, isAdmin, assignment, myItems, targetItems };
+  return {
+    group,
+    roster,
+    myMember,
+    isAdmin,
+    assignment,
+    myItems,
+    targetItems,
+    profileItemCount: profileItems.length,
+  };
 }

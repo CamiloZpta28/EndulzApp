@@ -11,6 +11,15 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { type ActionState, done, fail, toMessage } from "./types";
 
+/** Un emoji, o nada. Se recorta por code points, no por chars, para no
+ *  partir un emoji compuesto (👨‍👩‍👧 son varios code points más ZWJ). */
+function parseEmoji(value: FormDataEntryValue | null) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const points = [...raw];
+  return points.length <= 8 ? points.join("") : points.slice(0, 8).join("");
+}
+
 /** Solo códigos que la app conoce; cualquier otro cae al de por defecto. */
 function parseCurrency(value: FormDataEntryValue | null) {
   const code = String(value ?? "").toUpperCase();
@@ -33,6 +42,7 @@ export async function createGroup(
     p_budget_regalo: parseMoney(formData.get("budget_regalo")),
     p_currency: parseCurrency(formData.get("currency")),
     p_seat_name: String(formData.get("admin_seat_name") ?? "").trim() || null,
+    p_emoji: parseEmoji(formData.get("emoji")),
   });
 
   if (error || !groupId) {
@@ -60,6 +70,7 @@ export async function updateGroup(
       budget_endulzada: parseMoney(formData.get("budget_endulzada")),
       budget_regalo: parseMoney(formData.get("budget_regalo")),
       currency: parseCurrency(formData.get("currency")),
+      emoji: parseEmoji(formData.get("emoji")),
     })
     .eq("id", groupId);
 

@@ -18,12 +18,16 @@ export type Profile = {
   email: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  birthday: string | null;
+  phone: string | null;
   created_at: string;
 };
 
 export type Group = {
   id: string;
   name: string;
+  emoji: string | null;
+  invite_code: string;
   admin_id: string;
   status: GroupStatus;
   budget_endulzada: number;
@@ -39,6 +43,18 @@ export type Member = {
   group_id: string;
   user_id: string | null;
   shadow_name: string;
+  created_at: string;
+};
+
+/** Un item de la lista base del perfil, la que se importa a los parches. */
+export type ProfileWishlistItem = {
+  id: string;
+  user_id: string;
+  type: WishlistType;
+  item_name: string;
+  url: string | null;
+  image_url: string | null;
+  note: string | null;
   created_at: string;
 };
 
@@ -60,6 +76,37 @@ export type Assignment = {
   user_id: string | null;
   display_name: string | null;
   avatar_url: string | null;
+};
+
+/** `public.group_roster()` — nombres y fotos de quienes están en el parche. */
+export type RosterMember = {
+  member_id: string;
+  user_id: string | null;
+  name: string;
+  avatar_url: string | null;
+  birthday: string | null;
+  is_me: boolean;
+  is_admin: boolean;
+  created_at: string;
+};
+
+/** `public.get_join_preview()` — lo que ve un visitante sin sesión. */
+export type JoinPreview = {
+  group_name: string;
+  emoji: string | null;
+  member_count: number;
+  status: GroupStatus;
+};
+
+/** `public.get_join_details()` — la pantalla de confirmación, ya con sesión. */
+export type JoinDetails = {
+  group_id: string;
+  group_name: string;
+  emoji: string | null;
+  status: GroupStatus;
+  already_member: boolean;
+  is_admin: boolean;
+  members: { name: string; avatar_url: string | null }[];
 };
 
 /** `public.admin_group_members()` */
@@ -88,6 +135,7 @@ export type GroupSummary = {
   status: GroupStatus;
   admin_id: string;
   is_admin: boolean;
+  emoji?: string | null;
   budget_endulzada: number;
   budget_regalo: number;
   currency: string;
@@ -101,7 +149,12 @@ export type Database = {
       profiles: {
         Row: Profile;
         Insert: Partial<Profile> & { id: string };
-        Update: Partial<Profile>;
+        Update: {
+          display_name?: string | null;
+          avatar_url?: string | null;
+          birthday?: string | null;
+          phone?: string | null;
+        };
         Relationships: [];
       };
       groups: {
@@ -112,12 +165,14 @@ export type Database = {
           budget_endulzada?: number;
           budget_regalo?: number;
           currency?: string;
+          emoji?: string | null;
         };
         Update: {
           name?: string;
           budget_endulzada?: number;
           budget_regalo?: number;
           currency?: string;
+          emoji?: string | null;
         };
         Relationships: [];
       };
@@ -125,6 +180,25 @@ export type Database = {
         Row: Member;
         Insert: { group_id: string; shadow_name: string };
         Update: { shadow_name?: string };
+        Relationships: [];
+      };
+      profile_wishlists: {
+        Row: ProfileWishlistItem;
+        Insert: {
+          user_id: string;
+          type: WishlistType;
+          item_name: string;
+          url?: string | null;
+          image_url?: string | null;
+          note?: string | null;
+        };
+        Update: {
+          item_name?: string;
+          type?: WishlistType;
+          url?: string | null;
+          image_url?: string | null;
+          note?: string | null;
+        };
         Relationships: [];
       };
       wishlists: {
@@ -161,10 +235,20 @@ export type Database = {
           p_budget_regalo?: number;
           p_currency?: string;
           p_seat_name?: string | null;
+          p_emoji?: string | null;
         };
         Returns: string;
       };
       perform_draw: { Args: { p_group: string }; Returns: number };
+      group_roster: { Args: { p_group: string }; Returns: RosterMember[] };
+      get_join_preview: { Args: { p_code: string }; Returns: JoinPreview[] };
+      get_join_details: { Args: { p_code: string }; Returns: JoinDetails[] };
+      join_group: { Args: { p_code: string }; Returns: string };
+      rotate_invite_code: { Args: { p_group: string }; Returns: string };
+      import_profile_wishlist: {
+        Args: { p_member: string; p_type?: WishlistType | null };
+        Returns: number;
+      };
       reset_draw: { Args: { p_group: string }; Returns: void };
     };
     Enums: {

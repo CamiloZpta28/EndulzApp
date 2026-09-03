@@ -8,9 +8,14 @@ Next.js 16 (App Router) · TypeScript · Tailwind v4 · shadcn/ui · Supabase
 
 ## Cómo funciona
 
-- **Perfiles fantasma.** El admin agrega participantes escribiendo nombres, sin
-  cuentas. Cada puesto trae un `claim_token`; el enlace `/claim/<token>` lo
-  amarra a una cuenta real cuando la persona entra.
+- **Un enlace por parche.** `groups.invite_code` es un código de 8 caracteres
+  sin letras ambiguas (sin I, O, 0, 1). Quien abre `/join/<code>` ve el parche,
+  entra con su cuenta y confirma; `public.join_group()` le crea su propio
+  puesto. El admin no escribe nombres a mano.
+- **Perfil con lista base.** Foto, cumpleaños y celular en `/perfil`, más una
+  wishlist privada (`profile_wishlists`) que se **copia** a cualquier parche con
+  `public.import_profile_wishlist()`. Se copia y no se enlaza: ajustar la lista
+  de un parche no le cambia el regalo a nadie más.
 - **Sorteo con derangement.** `public.perform_draw()` acomoda los puestos en un
   único ciclo hamiltoniano al azar, así que nadie se saca a sí mismo, cada uno
   es sorteado exactamente una vez, y no quedan parejitas sueltas.
@@ -20,8 +25,18 @@ Next.js 16 (App Router) · TypeScript · Tailwind v4 · shadcn/ui · Supabase
 
 ## Puesta en marcha
 
-1. **Crea el proyecto en Supabase** y corre `supabase/schema.sql` completo en el
-   SQL editor. Es idempotente: se puede volver a correr sin romper nada.
+1. **Crea el proyecto en Supabase** y corre, en este orden y en el SQL editor:
+
+   ```
+   supabase/schema.sql
+   supabase/patches/001-revoke-execute-from-public.sql
+   supabase/patches/002-fix-rls-helper-execute.sql
+   supabase/patches/003-perfiles-y-enlace-de-parche.sql
+   ```
+
+   Todos son idempotentes. Los patches no están plegados dentro de
+   `schema.sql` a propósito: mantener las dos cosas en paralelo es cómo se
+   terminan divergiendo.
 
 2. **Variables de entorno** — copia `.env.example` a `.env.local`:
 
@@ -57,7 +72,8 @@ src/lib/supabase/{server,client,env}.ts
 src/lib/db.ts                capa de lectura (todo pasa por acá)
 src/lib/format.ts            helpers puros — se pueden importar del cliente
 src/lib/actions/*.ts         Server Actions: auth, groups, members, wishlists
-src/app/                     /, /login, /dashboard, /g/[id], /claim/[token]
+src/lib/site.ts              el origen público, sacado de los headers
+src/app/                     /, /login, /dashboard, /g/[id], /join/[code], /perfil
 ```
 
 ## Modelo de seguridad
@@ -68,8 +84,13 @@ RLS es la autoridad; los chequeos en TypeScript solo dan forma a la UI.
 | ----------- | ---------------------------------------------- | -------------------------------------------------- |
 | `profiles`  | solo el propio                                 | solo el propio                                     |
 | `groups`    | admin o participante                           | solo admin (y solo `name` y presupuestos)          |
-| `members`   | cualquiera del grupo, **sin** `assigned_to` ni `claim_token` | admin agrega/quita antes del sorteo   |
+| `members`   | cualquiera del grupo, **sin** `assigned_to` ni `claim_token` | cada quien se une por enlace; el admin quita antes del sorteo |
 | `wishlists` | la propia y la de quien te salió — nada más    | solo la propia                                     |
+| `profile_wishlists` | solo la propia — nunca sale del perfil  | solo la propia                                     |
+
+Nombres, fotos y cumpleaños de los del parche salen por `public.group_roster()`,
+porque `profiles` solo deja leer la fila propia. El **celular no** va en ese
+roster: queda privado.
 
 Dos detalles que valen la pena:
 
@@ -80,9 +101,16 @@ Dos detalles que valen la pena:
 - **Las funciones helper son `security definer`** a propósito: sin eso, las
   políticas de `members` que consultan `members` se recursionan.
 
-## Detalle pendiente de verificar
+## Trampas que ya se pagaron
 
-El SQL pasa por un parser de Postgres sin errores y la app compila, hace
-typecheck y pasa lint. Lo que **no** se ha corrido es `schema.sql` contra una
-base real, así que los cuerpos `plpgsql` (que ningún parser estático valida) y
-el flujo completo contra Supabase quedan sin probar de punta a punta.
+- **RLS es por fila; los helpers necesitan `EXECUTE`.** Una política se evalúa
+  con los privilegios de quien consulta, no del dueño de la tabla. Revocarle
+  `EXECUTE` a `is_group_member()` deja `SELECT` sobre `groups`, `members` y
+  `wishlists` fallando con `42501`. Eso es lo que arregla el patch 002.
+- **Postgres otorga `EXECUTE` a `PUBLIC`** en cada función nueva; `revoke ...
+  from anon, authenticated` no toca ese grant. Hay que nombrar a `public`.
+- **Nunca `parseFloat` sobre plata formateada.** `parseFloat("70.000")` da 70
+  con separador de miles colombiano. Los montos viajan como dígitos puros.
+- **shadcn en estilo `base-nova` corre sobre Base UI, no Radix.** No hay
+  `asChild`, es `render={...}`, y un `Button` que rinde un `<a>` necesita
+  `nativeButton={false}` (de ahí `ButtonLink`).
