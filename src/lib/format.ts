@@ -25,14 +25,6 @@ export function formatMoney(amount: number, currency: string = DEFAULT_CURRENCY)
   }
 }
 
-/** Prefer a claimed account's real name over the seat label the admin typed. */
-export function displayName(member: {
-  shadow_name: string;
-  display_name?: string | null;
-}) {
-  return member.display_name?.trim() || member.shadow_name;
-}
-
 /**
  * Split one wishlist into the two sections the UI renders. Es genérico porque
  * sirve tanto para la lista de un grupo como para la lista base del perfil,

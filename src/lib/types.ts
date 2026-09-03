@@ -84,9 +84,11 @@ export type WishlistItem = {
 /** `public.get_my_assignment()` */
 export type Assignment = {
   member_id: string;
-  shadow_name: string;
+  /** Ya resuelto por la base: apodo > nombre del perfil > nombre de entrada. */
+  name: string;
+  /** El apodo crudo. `null` = no tiene apodo en este grupo. */
+  nickname: string | null;
   user_id: string | null;
-  display_name: string | null;
   avatar_url: string | null;
   /** `false` = todavía no ha girado la ruleta. */
   already_revealed: boolean;

@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getGroupPageData, getProfile, requireUser } from "@/lib/db";
 import { getSiteOrigin } from "@/lib/site";
-import { displayName, groupByType } from "@/lib/format";
+import { groupByType } from "@/lib/format";
 
 export default async function GroupPage({
   params,
@@ -171,7 +171,7 @@ export default async function GroupPage({
                   <div className="mx-auto max-w-md">
                     <AssignmentGate
                       groupId={group.id}
-                      name={displayName(assignment)}
+                      name={assignment.name}
                       avatarUrl={assignment.avatar_url}
                       alreadyRevealed={assignment.already_revealed}
                       roster={roster.map((m) => ({
