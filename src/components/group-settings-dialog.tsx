@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Settings2, Trash2 } from "lucide-react";
+import { Pencil, Settings2, Trash2 } from "lucide-react";
 
 import { BudgetFields } from "@/components/budget-fields";
 import { SubmitButton } from "@/components/submit-button";
@@ -22,7 +22,20 @@ import { deleteGroup, updateGroup } from "@/lib/actions/groups";
 import { idle } from "@/lib/actions/types";
 import type { Group } from "@/lib/types";
 
-export function GroupSettingsDialog({ group }: { group: Group }) {
+/**
+ * `variant` decide cómo se abre:
+ *  - `"full"`: el botón ancho de la pestaña Parche.
+ *  - `"compact"`: el lápiz que va junto a los topes, arriba, que es donde
+ *    uno los está leyendo cuando decide cambiarlos.
+ * El contenido del diálogo es el mismo en los dos casos.
+ */
+export function GroupSettingsDialog({
+  group,
+  variant = "full",
+}: {
+  group: Group;
+  variant?: "full" | "compact";
+}) {
   const [open, setOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [state, formAction] = useActionState(updateGroup, idle);
@@ -35,10 +48,17 @@ export function GroupSettingsDialog({ group }: { group: Group }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="outline" className="w-full">
-            <Settings2 className="size-4" aria-hidden />
-            Ajustes del parche
-          </Button>
+          variant === "compact" ? (
+            <Button variant="ghost" size="sm">
+              <Pencil className="size-3.5" aria-hidden />
+              Editar topes
+            </Button>
+          ) : (
+            <Button variant="outline" className="w-full">
+              <Settings2 className="size-4" aria-hidden />
+              Ajustes del parche
+            </Button>
+          )
         }
       />
 

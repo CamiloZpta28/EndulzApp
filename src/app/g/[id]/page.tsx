@@ -49,7 +49,14 @@ export default async function GroupPage({
       />
 
       <main className="mx-auto w-full max-w-md flex-1 space-y-5 px-4 py-5">
-        <BudgetBanner group={group} />
+        <BudgetBanner
+          group={group}
+          action={
+            isAdmin ? (
+              <GroupSettingsDialog group={group} variant="compact" />
+            ) : null
+          }
+        />
 
         <Tabs defaultValue="mi-lista">
           <TabsList className="w-full">
