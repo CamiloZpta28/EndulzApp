@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Plus } from "lucide-react";
 
+import { BudgetFields } from "@/components/budget-fields";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -66,37 +67,7 @@ export function CreateGroupDialog() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="budget_endulzada">Tope endulzada</Label>
-              <Input
-                id="budget_endulzada"
-                name="budget_endulzada"
-                inputMode="numeric"
-                defaultValue="20000"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="budget_regalo">Tope regalo</Label>
-              <Input
-                id="budget_regalo"
-                name="budget_regalo"
-                inputMode="numeric"
-                defaultValue="80000"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="currency">Moneda</Label>
-            <Input
-              id="currency"
-              name="currency"
-              maxLength={3}
-              defaultValue="COP"
-              className="uppercase"
-            />
-          </div>
+          <BudgetFields />
 
           {state.message && !state.ok && (
             <Alert variant="destructive">

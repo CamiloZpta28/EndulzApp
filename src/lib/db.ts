@@ -47,11 +47,12 @@ export async function requireUser(nextPath?: string) {
 
 export async function getProfile(userId: string): Promise<Profile | null> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", userId)
     .maybeSingle();
+  if (error) throw error;
   return data ?? null;
 }
 
@@ -69,11 +70,15 @@ export async function getMyGroups(): Promise<GroupSummary[]> {
 
 export async function getGroup(groupId: string): Promise<Group | null> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("groups")
     .select("*")
     .eq("id", groupId)
     .maybeSingle();
+  // `maybeSingle()` reports "no rows" as data:null with no error, so anything
+  // in `error` is a real failure. Swallowing it here once turned a
+  // `42501 permission denied` into a silent "this group does not exist".
+  if (error) throw error;
   return data ?? null;
 }
 
@@ -105,12 +110,13 @@ export async function getMyMember(
   userId: string,
 ): Promise<Member | null> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("members")
     .select(MEMBER_COLUMNS)
     .eq("group_id", groupId)
     .eq("user_id", userId)
     .maybeSingle();
+  if (error) throw error;
   return data ?? null;
 }
 
@@ -160,7 +166,12 @@ export async function getClaimPreview(
   const { data, error } = await supabase.rpc("get_claim_preview", {
     p_token: token,
   });
-  if (error) return null;
+  if (error) {
+    // An unknown token is a legitimate miss, so this page stays friendly
+    // rather than throwing — but the reason belongs in the server log.
+    console.error("get_claim_preview failed:", error.message);
+    return null;
+  }
   return data?.[0] ?? null;
 }
 
@@ -185,7 +196,7 @@ export async function getGroupPageData(
 ): Promise<GroupPageData | null> {
   const [group, roster] = await Promise.all([
     getGroup(groupId),
-    getRoster(groupId).catch(() => [] as Member[]),
+    getRoster(groupId),
   ]);
   if (!group) return null;
 

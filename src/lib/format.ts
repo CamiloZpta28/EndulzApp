@@ -3,18 +3,25 @@
  * module reaches for `next/headers`, so importing it from a Client Component
  * breaks the build.
  */
+import { DEFAULT_CURRENCY, currencyMeta } from "@/lib/currencies";
 import type { WishlistItem, WishlistType } from "@/lib/types";
 
-export function formatMoney(amount: number, currency = "COP") {
+/**
+ * Monto con símbolo y separadores de miles de la moneda que corresponde.
+ * `currency` es `string` y no `CurrencyCode` porque llega de la base de datos:
+ * `currencyMeta` se encarga de un código desconocido.
+ */
+export function formatMoney(amount: number, currency: string = DEFAULT_CURRENCY) {
+  const meta = currencyMeta(currency);
   try {
-    return new Intl.NumberFormat("es-CO", {
+    return new Intl.NumberFormat(meta.locale, {
       style: "currency",
-      currency,
+      currency: meta.code,
       maximumFractionDigits: 0,
     }).format(amount);
   } catch {
-    // An unknown 3-letter code makes Intl throw; fall back to a plain number.
-    return `${currency} ${Math.round(amount).toLocaleString("es-CO")}`;
+    // Un código que Intl no conozca lo haría lanzar; caemos a algo legible.
+    return `${meta.symbol} ${Math.round(amount).toLocaleString(meta.locale)}`;
   }
 }
 

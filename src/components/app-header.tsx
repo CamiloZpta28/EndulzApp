@@ -1,6 +1,8 @@
 import { ArrowLeft, LogOut } from "lucide-react";
 
 import { ButtonLink } from "@/components/button-link";
+import { LogoMark } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/auth";
 
@@ -15,8 +17,8 @@ export function AppHeader({
 }) {
   return (
     <header className="bg-background/85 sticky top-0 z-10 border-b backdrop-blur">
-      <div className="mx-auto flex w-full max-w-md items-center gap-3 px-4 py-3">
-        {backHref && (
+      <div className="mx-auto flex w-full max-w-md items-center gap-2 px-4 py-3">
+        {backHref ? (
           <ButtonLink
             href={backHref}
             aria-label="Volver"
@@ -26,14 +28,20 @@ export function AppHeader({
           >
             <ArrowLeft className="size-5" />
           </ButtonLink>
+        ) : (
+          <LogoMark className="size-8 shrink-0" />
         )}
 
         <div className="min-w-0 flex-1">
-          <h1 className="truncate leading-tight font-semibold">{title}</h1>
+          <h1 className="truncate text-base leading-tight font-semibold">
+            {title}
+          </h1>
           {subtitle && (
             <p className="text-muted-foreground truncate text-xs">{subtitle}</p>
           )}
         </div>
+
+        <ThemeToggle />
 
         <form action={signOut}>
           <Button

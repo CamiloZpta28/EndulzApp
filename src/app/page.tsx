@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Candy, Gift, Shuffle } from "lucide-react";
 
 import { ButtonLink } from "@/components/button-link";
+import { Logo } from "@/components/logo";
 import { getUser } from "@/lib/db";
 
 const STEPS = [
@@ -29,9 +30,7 @@ export default async function Home() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-10 px-6 py-14">
       <header className="space-y-3">
-        <p className="text-primary text-sm font-semibold tracking-wide uppercase">
-          EndulzApp
-        </p>
+        <Logo className="text-primary" markClassName="size-9" />
         <h1 className="text-4xl leading-tight font-bold tracking-tight">
           El amigo secreto del parche, bien organizado.
         </h1>

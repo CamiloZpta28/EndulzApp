@@ -3,13 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import {
+  DEFAULT_CURRENCY,
+  isCurrencyCode,
+  parseMoney,
+} from "@/lib/currencies";
 import { createClient } from "@/lib/supabase/server";
 import { type ActionState, done, fail, toMessage } from "./types";
 
-function parseMoney(value: FormDataEntryValue | null) {
-  const raw = String(value ?? "").replace(/[^\d.,]/g, "").replace(",", ".");
-  const parsed = Number.parseFloat(raw);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+/** Solo códigos que la app conoce; cualquier otro cae al de por defecto. */
+function parseCurrency(value: FormDataEntryValue | null) {
+  const code = String(value ?? "").toUpperCase();
+  return isCurrencyCode(code) ? code : DEFAULT_CURRENCY;
 }
 
 export async function createGroup(
@@ -26,7 +31,7 @@ export async function createGroup(
     p_name: name,
     p_budget_endulzada: parseMoney(formData.get("budget_endulzada")),
     p_budget_regalo: parseMoney(formData.get("budget_regalo")),
-    p_currency: String(formData.get("currency") ?? "COP").toUpperCase().slice(0, 3),
+    p_currency: parseCurrency(formData.get("currency")),
     p_seat_name: String(formData.get("admin_seat_name") ?? "").trim() || null,
   });
 
@@ -54,7 +59,7 @@ export async function updateGroup(
       name,
       budget_endulzada: parseMoney(formData.get("budget_endulzada")),
       budget_regalo: parseMoney(formData.get("budget_regalo")),
-      currency: String(formData.get("currency") ?? "COP").toUpperCase().slice(0, 3),
+      currency: parseCurrency(formData.get("currency")),
     })
     .eq("id", groupId);
 

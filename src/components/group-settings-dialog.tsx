@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Settings2, Trash2 } from "lucide-react";
 
+import { BudgetFields } from "@/components/budget-fields";
 import { SubmitButton } from "@/components/submit-button";
 import { useActionToast } from "@/components/use-action-toast";
 import { Button } from "@/components/ui/button";
@@ -63,37 +64,11 @@ export function GroupSettingsDialog({ group }: { group: Group }) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="settings-endulzada">Tope endulzada</Label>
-              <Input
-                id="settings-endulzada"
-                name="budget_endulzada"
-                inputMode="numeric"
-                defaultValue={String(group.budget_endulzada)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="settings-regalo">Tope regalo</Label>
-              <Input
-                id="settings-regalo"
-                name="budget_regalo"
-                inputMode="numeric"
-                defaultValue={String(group.budget_regalo)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="settings-currency">Moneda</Label>
-            <Input
-              id="settings-currency"
-              name="currency"
-              maxLength={3}
-              defaultValue={group.currency}
-              className="uppercase"
-            />
-          </div>
+          <BudgetFields
+            defaultCurrency={group.currency}
+            defaultEndulzada={group.budget_endulzada}
+            defaultRegalo={group.budget_regalo}
+          />
 
           <SubmitButton className="w-full" pendingLabel="Guardando…">
             Guardar cambios

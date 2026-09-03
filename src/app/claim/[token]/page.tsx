@@ -1,6 +1,6 @@
-import { Candy } from "lucide-react";
 
 import { ClaimForm } from "@/components/claim-form";
+import { Logo } from "@/components/logo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ButtonLink } from "@/components/button-link";
 import { Card } from "@/components/ui/card";
@@ -24,11 +24,8 @@ export default async function ClaimPage({
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-6 py-14">
-      <div className="space-y-2 text-center">
-        <Candy className="text-primary mx-auto size-8" aria-hidden />
-        <p className="text-primary text-sm font-semibold tracking-wide uppercase">
-          EndulzApp
-        </p>
+      <div className="flex justify-center">
+        <Logo className="text-primary" markClassName="size-9" />
       </div>
 
       {!preview ? (

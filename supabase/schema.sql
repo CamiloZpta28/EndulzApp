@@ -562,13 +562,20 @@ grant execute on function public.my_groups()               to authenticated;
 -- the invite preview is the only thing an anonymous visitor may call
 grant execute on function public.get_claim_preview(uuid)   to anon, authenticated;
 
--- Internal only: the trigger function and the RLS helpers.
-revoke execute on function public.handle_new_user() from public;
+-- The RLS helpers MUST stay executable by `authenticated`. A policy's
+-- expression is evaluated with the privileges of the querying role, not the
+-- table owner's, so revoking these would make every SELECT on `groups`,
+-- `members` and `wishlists` fail with `42501 permission denied for function`.
+-- They are booleans about the caller's own `auth.uid()`, so exposing them
+-- reveals nothing their own rows do not.
+grant execute on function public.is_group_member(uuid)   to authenticated;
+grant execute on function public.is_group_admin(uuid)    to authenticated;
+grant execute on function public.is_my_member(uuid)      to authenticated;
+grant execute on function public.can_read_wishlist(uuid) to authenticated;
 
-revoke execute on function public.is_group_member(uuid)   from public;
-revoke execute on function public.is_group_admin(uuid)    from public;
-revoke execute on function public.is_my_member(uuid)      from public;
-revoke execute on function public.can_read_wishlist(uuid) from public;
+-- `handle_new_user` keeps its default PUBLIC grant on purpose: PostgREST does
+-- not expose functions returning `trigger`, so revoking buys nothing and only
+-- risks breaking signup.
 
 -- ----------------------------------------------------------------------------
 -- 8. Storage — wishlist item images
