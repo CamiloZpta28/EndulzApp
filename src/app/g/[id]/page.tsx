@@ -104,7 +104,7 @@ export default async function GroupPage({
                     profileItemCount={profileItemCount}
                   />
 
-                  {/* En escritorio las dos secciones van lado a lado. */}
+                  {/* En escritorio las dos con tope van lado a lado. */}
                   <div className="grid gap-6 md:grid-cols-2">
                     <WishlistSection
                       type="endulzada"
@@ -125,6 +125,18 @@ export default async function GroupPage({
                       editable
                     />
                   </div>
+
+                  {/* Los vetados van a lo ancho y al final: no compiten con
+                      las dos listas de deseos, son una advertencia. */}
+                  <WishlistSection
+                    type="vetado"
+                    items={mine.vetado}
+                    groupId={group.id}
+                    memberId={myMember.member_id}
+                    budget={0}
+                    currency={group.currency}
+                    editable
+                  />
                 </>
               ) : (
                 <Alert>

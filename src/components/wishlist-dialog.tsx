@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Candy, ExternalLink, Gift, ImageOff } from "lucide-react";
+import { ExternalLink, ImageOff } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { PersonAvatar } from "@/components/person-avatar";
@@ -14,15 +14,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { formatMoney, groupByType } from "@/lib/format";
-import type { WishlistItem, WishlistType } from "@/lib/types";
-
-const META: Record<
-  WishlistType,
-  { label: string; icon: typeof Candy; color: string }
-> = {
-  endulzada: { label: "Endulzada", icon: Candy, color: "var(--endulzada)" },
-  regalo: { label: "Regalo", icon: Gift, color: "var(--regalo)" },
-};
+import { WISHLIST_META, WISHLIST_ORDER } from "@/lib/wishlist-meta";
+import type { WishlistItem } from "@/lib/types";
 
 /**
  * La lista de alguien, en una ventana flotante y con las fotos grandes.
@@ -76,12 +69,16 @@ export function WishlistDialog({
         </DialogHeader>
 
         <div className="space-y-5">
-          {(["endulzada", "regalo"] as const).map((type) => {
-            const meta = META[type];
+          {WISHLIST_ORDER.map((type) => {
+            const meta = WISHLIST_META[type];
             const Icon = meta.icon;
             const budget =
               type === "endulzada" ? budgetEndulzada : budgetRegalo;
             const section = lists[type];
+
+            // La seccion de vetados solo sale si tiene algo: un "no hay
+            // vetados" no le dice nada a quien viene a mirar que regalar.
+            if (type === "vetado" && section.length === 0) return null;
 
             return (
               <section key={type} className="space-y-2">
@@ -91,9 +88,15 @@ export function WishlistDialog({
                 >
                   <Icon className="size-4" aria-hidden />
                   {meta.label}
-                  {budget > 0 && (
+                  {meta.hasBudget ? (
+                    budget > 0 && (
+                      <span className="text-muted-foreground font-normal">
+                        · hasta {formatMoney(budget, currency)}
+                      </span>
+                    )
+                  ) : (
                     <span className="text-muted-foreground font-normal">
-                      · hasta {formatMoney(budget, currency)}
+                      · mejor evitar
                     </span>
                   )}
                 </h3>

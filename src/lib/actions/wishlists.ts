@@ -19,7 +19,9 @@ const ALLOWED_MIME = new Set([
 
 function parseType(value: FormDataEntryValue | null): WishlistType | null {
   const type = String(value ?? "");
-  return type === "endulzada" || type === "regalo" ? type : null;
+  return type === "endulzada" || type === "regalo" || type === "vetado"
+    ? type
+    : null;
 }
 
 /**

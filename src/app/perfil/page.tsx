@@ -46,6 +46,9 @@ export default async function ProfilePage() {
               <ProfileWishlist type="endulzada" items={lists.endulzada} />
               <ProfileWishlist type="regalo" items={lists.regalo} />
             </div>
+
+            {/* A lo ancho y al final: es una advertencia, no un deseo. */}
+            <ProfileWishlist type="vetado" items={lists.vetado} />
           </section>
         </Shell>
       </main>

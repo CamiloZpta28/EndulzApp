@@ -39,7 +39,11 @@ export function displayName(member: {
  * que tienen columnas distintas pero el mismo `type`.
  */
 export function groupByType<T extends { type: WishlistType }>(items: T[]) {
-  const buckets: Record<WishlistType, T[]> = { endulzada: [], regalo: [] };
+  const buckets: Record<WishlistType, T[]> = {
+    endulzada: [],
+    regalo: [],
+    vetado: [],
+  };
   for (const item of items) buckets[item.type].push(item);
   return buckets;
 }

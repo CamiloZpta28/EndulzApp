@@ -11,7 +11,12 @@
  */
 
 export type GroupStatus = "pending" | "drawn";
-export type WishlistType = "endulzada" | "regalo";
+/**
+ * Las tres secciones de una lista. `vetado` no es una categoría de
+ * presupuesto: es lo que NO se quiere recibir. Va en el mismo enum porque
+ * comparte todo lo demás (foto, nota, link, prioridad, importar del perfil).
+ */
+export type WishlistType = "endulzada" | "regalo" | "vetado";
 
 export type Profile = {
   id: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
-import { Candy, Gift, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { ImagePicker } from "@/components/image-picker";
 import { SubmitButton } from "@/components/submit-button";
@@ -14,26 +14,14 @@ import { WishlistItemRow } from "@/components/wishlist-item-row";
 import { idle } from "@/lib/actions/types";
 import { addWishlistItem } from "@/lib/actions/wishlists";
 import { formatMoney } from "@/lib/format";
+import { WISHLIST_META } from "@/lib/wishlist-meta";
 import type { WishlistItem, WishlistType } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
-const META: Record<
-  WishlistType,
-  { label: string; icon: typeof Candy; color: string; soft: string; hint: string }
-> = {
-  endulzada: {
-    label: "Endulzada",
-    icon: Candy,
-    color: "var(--endulzada)",
-    soft: "var(--endulzada-soft)",
-    hint: "Dulces, mecato, cafecitos — las cositas del día a día.",
-  },
-  regalo: {
-    label: "Regalo",
-    icon: Gift,
-    color: "var(--regalo)",
-    soft: "var(--regalo-soft)",
-    hint: "El regalo grande del final.",
-  },
+const PLACEHOLDER: Record<WishlistType, string> = {
+  endulzada: "Chocolatinas Jet",
+  regalo: "Audifonos bluetooth",
+  vetado: "Nada con mani - alergia",
 };
 
 export function WishlistSection({
@@ -53,7 +41,7 @@ export function WishlistSection({
   currency: string;
   editable: boolean;
 }) {
-  const meta = META[type];
+  const meta = WISHLIST_META[type];
   const Icon = meta.icon;
 
   const [open, setOpen] = useState(false);
@@ -68,7 +56,10 @@ export function WishlistSection({
   return (
     <section className="space-y-3">
       <header
-        className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2"
+        className={cn(
+          "flex items-center justify-between gap-2 rounded-xl border px-3 py-2",
+          meta.dashed && "border-dashed",
+        )}
         style={{ backgroundColor: meta.soft, borderColor: meta.color }}
       >
         <div className="min-w-0">
@@ -79,9 +70,17 @@ export function WishlistSection({
             <Icon className="size-4" aria-hidden />
             {meta.label}
           </h3>
-          <p className="text-foreground/70 text-xs">
-            {budget > 0 ? `Hasta ${formatMoney(budget, currency)}` : "Sin tope"}
-          </p>
+          {meta.hasBudget ? (
+            <p className="text-foreground/70 text-xs">
+              {budget > 0
+                ? `Hasta ${formatMoney(budget, currency)}`
+                : "Sin tope"}
+            </p>
+          ) : (
+            <p className="text-foreground/70 text-xs">
+              Mejor no me regalen esto
+            </p>
+          )}
         </div>
         {editable && (
           <Button
@@ -108,15 +107,17 @@ export function WishlistSection({
           <input type="hidden" name="type" value={type} />
 
           <div className="space-y-1.5">
-            <Label htmlFor={`item_name-${type}`}>¿Qué se te antoja?</Label>
+            <Label htmlFor={`item_name-${type}`}>
+              {type === "vetado"
+                ? "¿Qué prefieres NO recibir?"
+                : "¿Qué se te antoja?"}
+            </Label>
             <Input
               id={`item_name-${type}`}
               name="item_name"
               required
               maxLength={140}
-              placeholder={
-                type === "endulzada" ? "Chocolatinas Jet" : "Audífonos bluetooth"
-              }
+              placeholder={PLACEHOLDER[type]}
             />
           </div>
 
@@ -155,7 +156,7 @@ export function WishlistSection({
         </p>
       ) : (
         <>
-          {editable && items.length > 1 && (
+          {editable && items.length > 1 && type !== "vetado" && (
             <p className="text-muted-foreground px-1 text-xs">
               Arriba lo que más quieres — usa las flechitas para acomodarlo.
             </p>

@@ -152,6 +152,12 @@
   --endulzada-soft: oklch(0.965 0.035 355);
   --regalo: oklch(0.6 0.13 240);
   --regalo-soft: oklch(0.96 0.03 240);
+  /* Un neutro con un pelo de calidez. En claro el `--primary` y el
+     `--destructive` ya son rojos, así que un tercer rojo para los vetados se
+     habría perdido entre los dos; lo que dice "prohibido" acá es el icono y
+     el borde punteado. */
+  --vetado: oklch(0.48 0.02 20);
+  --vetado-soft: oklch(0.955 0.005 20);
 
   /* ------------------------------------------------------------------ */
   /* Zona segura del dispositivo (barra de estado, notch, barra de gestos).
@@ -198,6 +204,8 @@
   --endulzada-soft: oklch(0.28 0.055 355);
   --regalo: oklch(0.74 0.12 265);
   --regalo-soft: oklch(0.27 0.05 265);
+  --vetado: oklch(0.72 0.015 250);
+  --vetado-soft: oklch(0.26 0.01 250);
 
   /* Oscuro con un tinte frío suave, para que acompañe al azul. */
   --background: oklch(0.17 0.014 250);
