@@ -68,6 +68,22 @@ export async function getProfileWishlist(): Promise<ProfileWishlistItem[]> {
   return data ?? [];
 }
 
+/**
+ * Cuántas cosas tiene la lista base.
+ *
+ * Va aparte de `getProfileWishlist` porque el dashboard solo necesita saber si
+ * está vacía, y traerse las filas enteras (con notas y URLs de fotos) para
+ * contarlas sería pagar de más justo en la pantalla de entrada.
+ */
+export async function getProfileWishlistCount(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("profile_wishlists")
+    .select("*", { count: "exact", head: true });
+  if (error) throw error;
+  return count ?? 0;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Groups                                                                     */
 /* -------------------------------------------------------------------------- */
