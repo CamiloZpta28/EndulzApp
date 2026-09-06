@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { ExternalLink, Pencil, Trash2, X } from "lucide-react";
 
 import { ImagePicker } from "@/components/image-picker";
+import { ItemNameField } from "@/components/item-name-field";
 import { PriorityControls } from "@/components/priority-controls";
 import { SubmitButton } from "@/components/submit-button";
 import { useActionToast } from "@/components/use-action-toast";
@@ -45,16 +46,11 @@ export function ProfileItemRow({
         <form action={updateAction} className="space-y-3">
           <input type="hidden" name="item_id" value={item.id} />
 
-          <div className="space-y-1.5">
-            <Label htmlFor={`pw-name-${item.id}`}>Antojo</Label>
-            <Input
-              id={`pw-name-${item.id}`}
-              name="item_name"
-              required
-              maxLength={140}
-              defaultValue={item.item_name}
-            />
-          </div>
+          <ItemNameField
+            id={`pw-name-${item.id}`}
+            type={item.type}
+            defaultValue={item.item_name}
+          />
 
           <div className="space-y-1.5">
             <Label htmlFor={`pw-url-${item.id}`}>Link</Label>

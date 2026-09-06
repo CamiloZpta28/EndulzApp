@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useState } from "react";
 import { Plus } from "lucide-react";
 
 import { ImagePicker } from "@/components/image-picker";
+import { ItemNameField } from "@/components/item-name-field";
 import { SubmitButton } from "@/components/submit-button";
 import { useActionToast } from "@/components/use-action-toast";
 import { Button } from "@/components/ui/button";
@@ -17,12 +18,6 @@ import { formatMoney } from "@/lib/format";
 import { WISHLIST_META } from "@/lib/wishlist-meta";
 import type { WishlistItem, WishlistType } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-const PLACEHOLDER: Record<WishlistType, string> = {
-  endulzada: "Chocolatinas Jet",
-  regalo: "Audifonos bluetooth",
-  vetado: "Nada con mani - alergia",
-};
 
 export function WishlistSection({
   type,
@@ -45,13 +40,14 @@ export function WishlistSection({
   const Icon = meta.icon;
 
   const [open, setOpen] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
   const [addState, addAction] = useActionState(addWishlistItem, idle);
 
-  useActionToast(addState, () => {
-    formRef.current?.reset();
-    setOpen(false);
-  });
+  // El formulario NO se cierra al guardar: se remonta vacío y con el foco
+  // puesto. Cerrarlo era la razón de fondo por la que la gente metía la lista
+  // entera en una casilla — agregar el segundo antojo costaba buscarlo y
+  // volverlo a abrir, así que salía más fácil escribirlo todo de una.
+  const [guardados, setGuardados] = useState(0);
+  useActionToast(addState, () => setGuardados((n) => n + 1));
 
   return (
     <section className="space-y-3">
@@ -98,7 +94,7 @@ export function WishlistSection({
 
       {editable && open && (
         <form
-          ref={formRef}
+          key={guardados}
           action={addAction}
           className="bg-card space-y-3 rounded-xl border p-3"
         >
@@ -106,20 +102,7 @@ export function WishlistSection({
           <input type="hidden" name="member_id" value={memberId} />
           <input type="hidden" name="type" value={type} />
 
-          <div className="space-y-1.5">
-            <Label htmlFor={`item_name-${type}`}>
-              {type === "vetado"
-                ? "¿Qué prefieres NO recibir?"
-                : "¿Qué se te antoja?"}
-            </Label>
-            <Input
-              id={`item_name-${type}`}
-              name="item_name"
-              required
-              maxLength={140}
-              placeholder={PLACEHOLDER[type]}
-            />
-          </div>
+          <ItemNameField id={`item_name-${type}`} type={type} autoFocus />
 
           <div className="space-y-1.5">
             <Label htmlFor={`url-${type}`}>Link (opcional)</Label>
@@ -147,6 +130,12 @@ export function WishlistSection({
           <SubmitButton className="w-full" pendingLabel="Guardando…">
             Guardar antojo
           </SubmitButton>
+
+          {guardados > 0 && (
+            <p className="text-muted-foreground text-center text-xs">
+              Listo, ya quedó en tu lista. Sigue agregando de a uno.
+            </p>
+          )}
         </form>
       )}
 
