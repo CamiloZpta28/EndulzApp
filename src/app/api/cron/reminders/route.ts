@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
-import webpush from "web-push";
 
+import { sweepOrphanDeliveryPhotos } from "@/lib/delivery-photos";
+import { missingPushEnv, sendPush } from "@/lib/push";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatGroupDate } from "@/lib/format";
 
@@ -79,13 +80,7 @@ export async function GET(request: NextRequest) {
   // Cada variable que falta se reporta por nombre. Un cron que se cae con un
   // 500 vacío no se puede depurar: hay que abrir los logs para descubrir algo
   // que la respuesta podía decir de una.
-  const faltantes = [
-    ["SUPABASE_SERVICE_ROLE_KEY", process.env.SUPABASE_SERVICE_ROLE_KEY],
-    ["NEXT_PUBLIC_VAPID_PUBLIC_KEY", process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY],
-    ["VAPID_PRIVATE_KEY", process.env.VAPID_PRIVATE_KEY],
-  ]
-    .filter(([, value]) => !value)
-    .map(([name]) => name);
+  const faltantes = missingPushEnv();
 
   if (faltantes.length > 0) {
     return Response.json(
@@ -93,11 +88,6 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT ?? "mailto:hola@endulzapp.app";
-  webpush.setVapidDetails(subject, publicKey!, privateKey!);
 
   const supabase = createAdminClient();
   const { data, error } = await supabase.rpc("pending_reminders", {
@@ -121,19 +111,15 @@ export async function GET(request: NextRequest) {
   const rows = (data ?? []) as Pending[];
   let sent = 0;
   let dropped = 0;
-  const failures: string[] = [];
+  let failures = 0;
 
   for (const row of rows) {
-    const message = buildMessage(row);
-    try {
-      await webpush.sendNotification(
-        {
-          endpoint: row.endpoint,
-          keys: { p256dh: row.p256dh, auth: row.auth },
-        },
-        JSON.stringify({ ...message, url: `/g/${row.group_id}` }),
-      );
+    const result = await sendPush(supabase, row, {
+      ...buildMessage(row),
+      url: `/g/${row.group_id}`,
+    });
 
+    if (result === "sent") {
       await supabase.rpc("mark_reminder_sent", {
         p_group: row.group_id,
         p_user: row.user_id,
@@ -142,25 +128,25 @@ export async function GET(request: NextRequest) {
         p_days_before: row.days_before,
       });
       sent++;
-    } catch (pushError) {
-      const status = (pushError as { statusCode?: number }).statusCode;
-      // 404/410 = el navegador desechó esa suscripción. Se borra o el cron la
-      // reintentaría todos los días para siempre.
-      if (status === 404 || status === 410) {
-        await supabase.rpc("drop_push_subscription", {
-          p_endpoint: row.endpoint,
-        });
-        dropped++;
-      } else {
-        failures.push(`${status ?? "?"}`);
-      }
+    } else if (result === "dropped") {
+      dropped++;
+    } else {
+      failures++;
     }
   }
+
+  // De paso, una vez al día: las fotos de entregas que ya no existen. No
+  // tumba el cron si falla — los recordatorios son lo importante.
+  const fotos = await sweepOrphanDeliveryPhotos(supabase).catch((error) => {
+    console.error("limpieza de fotos falló:", error);
+    return null;
+  });
 
   return Response.json({
     pendientes: rows.length,
     enviados: sent,
     suscripciones_muertas: dropped,
     fallos: failures,
+    fotos_huerfanas_borradas: fotos,
   });
 }

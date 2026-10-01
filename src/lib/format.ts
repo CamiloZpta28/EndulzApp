@@ -102,3 +102,29 @@ export function formatGroupDate(value?: string | null) {
 
   return { relative, absolute, days };
 }
+
+/**
+ * La endulzada "de ahora": la más cercana a hoy, para atrás o para adelante.
+ *
+ * Ni "la próxima" ni "la última": en una oficina se entrega el jueves en la
+ * tarde para el viernes, pero también el lunes porque el viernes no se fue.
+ * El lunes, el viernes pasado está a 3 días y el siguiente a 4, así que gana
+ * el que se estaba debiendo. En un empate, la que viene.
+ */
+export function pickCurrentEndulzada<T extends { happens_on: string }>(
+  endulzadas: T[],
+): T | null {
+  let best: T | null = null;
+  let bestScore = Infinity;
+  for (const endulzada of endulzadas) {
+    const days = formatGroupDate(endulzada.happens_on)?.days;
+    if (days === undefined) continue;
+    // El medio punto desempata a favor del futuro.
+    const score = Math.abs(days) + (days < 0 ? 0.5 : 0);
+    if (score < bestScore) {
+      best = endulzada;
+      bestScore = score;
+    }
+  }
+  return best;
+}

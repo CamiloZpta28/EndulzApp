@@ -34,6 +34,12 @@ function parseCurrency(value: FormDataEntryValue | null) {
   return isCurrencyCode(code) ? code : DEFAULT_CURRENCY;
 }
 
+function parseDeliveryMode(value: FormDataEntryValue | null) {
+  return value === "en_persona" || value === "escondida"
+    ? { delivery_mode: value as "en_persona" | "escondida" }
+    : {};
+}
+
 export async function createGroup(
   _prev: ActionState,
   formData: FormData,
@@ -82,6 +88,9 @@ export async function updateGroup(
       // Estaba faltando: el formulario mandaba la fecha y esta acción no la
       // leía, así que nunca se guardaba y la tarjeta no tenía qué mostrar.
       reveal_at: parseDate(formData.get("reveal_at")),
+      // Solo si vino: antes del patch 012 el formulario no lo manda, y
+      // escribir una columna que no existe tumbaría todo el guardado.
+      ...parseDeliveryMode(formData.get("delivery_mode")),
     })
     .eq("id", groupId);
 

@@ -6,6 +6,12 @@ import { ButtonLink } from "@/components/button-link";
 import { AssignmentGate } from "@/components/assignment-gate";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BudgetBanner } from "@/components/budget-banner";
+import {
+  DeliveryPanel,
+  DeliveryProgressCard,
+  ReceivedDeliveries,
+  type DeliveryView,
+} from "@/components/delivery-panel";
 import { DrawPanel } from "@/components/draw-panel";
 import { GroupDate } from "@/components/group-date";
 import { GroupSettingsDialog } from "@/components/group-settings-dialog";
@@ -18,6 +24,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getGroupPageData, getProfile, requireUser } from "@/lib/db";
+import {
+  deliveryPhotoUrl,
+  deliveryPhotosEnabled,
+} from "@/lib/delivery-photos";
 import { getSiteOrigin } from "@/lib/site";
 import { groupByType } from "@/lib/format";
 
@@ -48,8 +58,27 @@ export default async function GroupPage({
     profileItemCount,
     endulzadas,
     visibleWishlists,
+    deliveries,
+    deliveryProgress,
   } = data;
   if (!myMember && !isAdmin) notFound();
+
+  // Las fotos nunca salen con su ruta de Storage: se sirven por una ruta de
+  // la app que vuelve a preguntarle a la base si la entrega es tuya.
+  const toView = (d: (typeof deliveries)[number]): DeliveryView => ({
+    delivery_id: d.delivery_id,
+    endulzada_id: d.endulzada_id,
+    happens_on: d.happens_on,
+    message: d.message,
+    photoUrl: deliveryPhotoUrl(group.id, d.delivery_id, d.photo_path),
+    status: d.status,
+    delivered_on: d.delivered_on,
+  });
+  const given = deliveries.filter((d) => d.direction === "dada").map(toView);
+  const received = deliveries
+    .filter((d) => d.direction === "recibida")
+    .map(toView);
+  const deliveryMode = group.status === "drawn" ? group.delivery_mode : undefined;
 
   const mine = groupByType(myItems);
 
@@ -188,12 +217,35 @@ export default async function GroupPage({
                     />
                   </div>
 
+                  {/* Solo después de girar la ruleta: antes de saber a quién
+                      le tocó, un "ya se la dejé" no tiene sentido. */}
+                  {deliveryMode && assignment.already_revealed && (
+                    <div className="mx-auto max-w-md">
+                      <DeliveryPanel
+                        groupId={group.id}
+                        mode={deliveryMode}
+                        endulzadas={endulzadas}
+                        given={given}
+                        recipientName={assignment.name}
+                        photosEnabled={deliveryPhotosEnabled()}
+                      />
+                    </div>
+                  )}
                 </>
               )}
             </TabsContent>
 
             {/* --------------------------------------------------- el grupo */}
             <TabsContent value="parche" className="space-y-5 pt-4">
+              {/* Lo que me dejaron va de primero: es lo único de esta
+                  pestaña que tiene prisa. */}
+              {deliveryMode === "escondida" && (
+                <ReceivedDeliveries groupId={group.id} received={received} />
+              )}
+              {deliveryMode === "en_persona" && (
+                <DeliveryProgressCard progress={deliveryProgress} />
+              )}
+
               {isAdmin && group.status === "pending" && (
                 <InviteCard
                   groupId={group.id}

@@ -11,6 +11,16 @@
  */
 
 export type GroupStatus = "pending" | "drawn";
+
+/**
+ * Cómo entrega el grupo las endulzadas.
+ *  - `en_persona`: se reúnen (la bolsa). Solo se marca "ya la tengo lista".
+ *  - `escondida`: cada quien la deja donde pueda y avisa por la app, con
+ *    mensaje y foto, sin decir quién es.
+ */
+export type DeliveryMode = "en_persona" | "escondida";
+
+export type DeliveryStatus = "entregada" | "encontrada" | "no_la_encuentro";
 /**
  * Las tres secciones de una lista. `vetado` no es una categoría de
  * presupuesto: es lo que NO se quiere recibir. Va en el mismo enum porque
@@ -40,6 +50,12 @@ export type Group = {
   currency: string;
   /** El día del descubrimiento (`YYYY-MM-DD`). */
   reveal_at: string | null;
+  /**
+   * Opcional porque llega con el patch 012: mientras no se corra, la columna
+   * no existe y toda la función de entregas se esconde en vez de romper la
+   * página del grupo.
+   */
+  delivery_mode?: DeliveryMode;
   drawn_at: string | null;
   created_at: string;
 };
@@ -155,6 +171,40 @@ export type ClaimPreview = {
   status: GroupStatus;
 };
 
+/**
+ * `public.my_group_deliveries()` — una entrega vista por mí.
+ * `recibida` nunca dice de quién: esa información no existe en la base.
+ */
+export type MyDelivery = {
+  delivery_id: string;
+  endulzada_id: string;
+  happens_on: string;
+  direction: "dada" | "recibida";
+  message: string | null;
+  photo_path: string | null;
+  status: DeliveryStatus;
+  /** Solo el día, a propósito: la hora sería una pista. */
+  delivered_on: string;
+};
+
+/** `public.delivery_progress()` — cuántas listas de cuántas. */
+export type DeliveryProgress = {
+  endulzada_id: string;
+  happens_on: string;
+  delivered: number;
+  total: number;
+};
+
+/** `public.delivery_push_targets()` — solo para el servidor. */
+export type DeliveryPushTarget = {
+  group_id: string;
+  group_name: string;
+  emoji: string | null;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+};
+
 /** Un dispositivo suscrito a recordatorios. */
 export type PushSubscriptionRow = {
   id: string;
@@ -236,6 +286,7 @@ export type Database = {
           currency?: string;
           emoji?: string | null;
           reveal_at?: string | null;
+          delivery_mode?: DeliveryMode;
         };
         Relationships: [];
       };
@@ -359,6 +410,29 @@ export type Database = {
         Returns: number;
       };
       reset_draw: { Args: { p_group: string }; Returns: void };
+      deliver_endulzada: {
+        Args: { p_group: string; p_endulzada: string; p_message?: string | null };
+        Returns: { delivery_id: string; notice: "llego" | "pista" | null }[];
+      };
+      set_delivery_photo: {
+        Args: { p_delivery: string; p_path: string | null };
+        Returns: string | null;
+      };
+      undo_delivery: { Args: { p_delivery: string }; Returns: string | null };
+      respond_delivery: {
+        Args: { p_delivery: string; p_status: "encontrada" | "no_la_encuentro" };
+        Returns: void;
+      };
+      my_group_deliveries: { Args: { p_group: string }; Returns: MyDelivery[] };
+      delivery_progress: {
+        Args: { p_group: string };
+        Returns: DeliveryProgress[];
+      };
+      delivery_push_targets: {
+        Args: { p_delivery: string; p_to: "recipient" | "giver" };
+        Returns: DeliveryPushTarget[];
+      };
+      existing_delivery_ids: { Args: { p_ids: string[] }; Returns: string[] };
     };
     Enums: {
       group_status: GroupStatus;

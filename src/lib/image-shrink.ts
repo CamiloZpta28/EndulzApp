@@ -13,6 +13,12 @@ import { UPLOAD_MAX_EDGE } from "@/lib/upload-limits";
  * y una lista de regalos con un GIF quieto no tiene sentido. A cambio, un GIF
  * pesado se rechaza con un mensaje en vez de comprimirse.
  *
+ * `strict` es para las fotos de las entregas anónimas: ahí NUNCA se deja
+ * pasar el archivo original. Re-dibujarlo en el canvas es lo que le borra los
+ * metadatos (la ubicación GPS, "iPhone de Fulano", la hora exacta), así que
+ * los caminos de escape que en una lista de deseos son razonables —el GIF
+ * intacto, el archivo que no se pudo decodificar— acá serían una filtración.
+ *
  * Solo cliente: usa `canvas` y `createImageBitmap`.
  */
 export async function shrinkImage(
@@ -20,8 +26,13 @@ export async function shrinkImage(
   {
     maxEdge = UPLOAD_MAX_EDGE,
     maxBytes,
-  }: { maxEdge?: number; maxBytes: number },
+    strict = false,
+  }: { maxEdge?: number; maxBytes: number; strict?: boolean },
 ): Promise<{ file: File; shrunk: boolean } | { error: string }> {
+  if (strict && file.type === "image/gif") {
+    return { error: "Acá va una foto, no un GIF." };
+  }
+
   // Animado: no se toca.
   if (file.type === "image/gif") {
     if (file.size > maxBytes) {
@@ -39,7 +50,7 @@ export async function shrinkImage(
   } catch {
     // Un archivo que el navegador no sabe decodificar: se deja pasar tal cual
     // y que decida la validación de tamaño.
-    return file.size > maxBytes
+    return strict || file.size > maxBytes
       ? { error: "No pudimos leer esa imagen. Prueba con otra." }
       : { file, shrunk: false };
   }
@@ -54,7 +65,9 @@ export async function shrinkImage(
   const context = canvas.getContext("2d");
   if (!context) {
     bitmap.close();
-    return { file, shrunk: false };
+    return strict
+      ? { error: "Tu navegador no pudo preparar la foto. Prueba con otro." }
+      : { file, shrunk: false };
   }
   context.drawImage(bitmap, 0, 0, width, height);
   bitmap.close();

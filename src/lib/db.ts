@@ -14,11 +14,13 @@ import { getSessionUser, type SessionUser } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Assignment,
+  DeliveryProgress,
   Group,
   GroupEndulzada,
   GroupSummary,
   JoinDetails,
   JoinPreview,
+  MyDelivery,
   Profile,
   ProfileWishlistItem,
   RosterMember,
@@ -200,6 +202,28 @@ export async function getEndulzadas(
   return data ?? [];
 }
 
+/** Mis entregas en el grupo, dadas y recibidas. Las recibidas no dicen de quién. */
+export async function getMyDeliveries(groupId: string): Promise<MyDelivery[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("my_group_deliveries", {
+    p_group: groupId,
+  });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Cuántas listas de cuántas, por endulzada. */
+export async function getDeliveryProgress(
+  groupId: string,
+): Promise<DeliveryProgress[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("delivery_progress", {
+    p_group: groupId,
+  });
+  if (error) throw error;
+  return data ?? [];
+}
+
 /* -------------------------------------------------------------------------- */
 /* Invitaciones                                                               */
 /* -------------------------------------------------------------------------- */
@@ -247,6 +271,9 @@ export type GroupPageData = {
   endulzadas: GroupEndulzada[];
   /** Solo las que RLS permite: la propia y la de quien salió. */
   visibleWishlists: Map<string, WishlistItem[]>;
+  /** Vacías si el patch 012 no se ha corrido o si no hay sorteo. */
+  deliveries: MyDelivery[];
+  deliveryProgress: DeliveryProgress[];
 };
 
 /** One call for everything `/g/[id]` renders. */
@@ -267,11 +294,24 @@ export async function getGroupPageData(
   const assignment =
     group.status === "drawn" && myMember ? await getMyAssignment(groupId) : null;
 
-  const [visibleWishlists, profileItems] = await Promise.all([
-    getVisibleWishlists(roster.map((m) => m.member_id)),
-    // Solo para saber si tiene sentido ofrecer el botón de importar.
-    myMember ? getProfileWishlist() : Promise.resolve([]),
-  ]);
+  // Las entregas llegan con el patch 012. Mientras no se corra, la columna
+  // `delivery_mode` no viene en el `select *` y las funciones no existen:
+  // preguntar por ellas tumbaría la página entera, así que ni se pregunta.
+  const deliveriesReady =
+    group.delivery_mode !== undefined && group.status === "drawn";
+
+  const [visibleWishlists, profileItems, deliveries, deliveryProgress] =
+    await Promise.all([
+      getVisibleWishlists(roster.map((m) => m.member_id)),
+      // Solo para saber si tiene sentido ofrecer el botón de importar.
+      myMember ? getProfileWishlist() : Promise.resolve([]),
+      deliveriesReady && myMember
+        ? getMyDeliveries(groupId)
+        : Promise.resolve([]),
+      deliveriesReady && group.delivery_mode === "en_persona"
+        ? getDeliveryProgress(groupId)
+        : Promise.resolve([]),
+    ]);
 
   // Las dos listas que las pestañas usan salen del mismo mapa: una consulta
   // en vez de tres.
@@ -293,5 +333,7 @@ export async function getGroupPageData(
     profileItemCount: profileItems.length,
     endulzadas,
     visibleWishlists,
+    deliveries,
+    deliveryProgress,
   };
 }

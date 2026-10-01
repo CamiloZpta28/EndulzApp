@@ -41,10 +41,18 @@ const ALLOWED = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 export function ImagePicker({
   idPrefix,
   existingUrl = null,
+  label = "Foto de referencia (opcional)",
+  allowUrl = true,
+  strict = false,
 }: {
   idPrefix: string;
   /** La foto que ya tiene el antojo, si se está editando. */
   existingUrl?: string | null;
+  label?: string;
+  /** Pegar la dirección de una foto de internet. */
+  allowUrl?: boolean;
+  /** Siempre re-dibujar la foto (ver `shrinkImage`): sin GIF, sin original. */
+  strict?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -65,7 +73,10 @@ export function ImagePicker({
     setBusy(true);
     // Se achica ANTES de tocar el formulario: si no cabe, no se guarda nada a
     // medias y el mensaje sale acá mismo, sin ir al servidor a que lo rechace.
-    const result = await shrinkImage(original, { maxBytes: MAX_IMAGE_BYTES });
+    const result = await shrinkImage(original, {
+      maxBytes: MAX_IMAGE_BYTES,
+      strict,
+    });
     setBusy(false);
 
     if ("error" in result) {
@@ -117,7 +128,7 @@ export function ImagePicker({
     <div className="space-y-2">
       <Label htmlFor={`${idPrefix}-imagen`} className="flex items-center gap-1.5">
         <ImagePlus className="size-3.5" aria-hidden />
-        Foto de referencia (opcional)
+        {label}
       </Label>
 
       {/* Zona de pegado: recibe Ctrl+V mientras tenga el foco. */}
@@ -139,7 +150,7 @@ export function ImagePicker({
             }
           }
           const text = event.clipboardData.getData("text").trim();
-          if (/^https?:\/\/\S+$/i.test(text)) {
+          if (allowUrl && /^https?:\/\/\S+$/i.test(text)) {
             event.preventDefault();
             setShowUrl(true);
             setUrlValue(text);
@@ -187,16 +198,18 @@ export function ImagePicker({
               <Upload className="size-3.5" aria-hidden />
               Subir
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowUrl((value) => !value)}
-              aria-expanded={showUrl}
-            >
-              <Link2 className="size-3.5" aria-hidden />
-              Pegar dirección
-            </Button>
+            {allowUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowUrl((value) => !value)}
+                aria-expanded={showUrl}
+              >
+                <Link2 className="size-3.5" aria-hidden />
+                Pegar dirección
+              </Button>
+            )}
             <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
               <ClipboardPaste className="size-3" aria-hidden />
               o pega acá con Ctrl+V
@@ -205,7 +218,7 @@ export function ImagePicker({
         )}
       </div>
 
-      {showUrl && !preview && (
+      {allowUrl && showUrl && !preview && (
         <Input
           type="url"
           inputMode="url"
@@ -235,7 +248,11 @@ export function ImagePicker({
         ref={fileRef}
         type="file"
         name="image"
-        accept="image/png,image/jpeg,image/webp,image/gif"
+        accept={
+          strict
+            ? "image/png,image/jpeg,image/webp"
+            : "image/png,image/jpeg,image/webp,image/gif"
+        }
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];
@@ -245,7 +262,9 @@ export function ImagePicker({
 
       {/* Los dos campos van SOLO cuando hay algo que decir. Si no se tocó la
           foto, el formulario no manda ninguno y el servidor la conserva. */}
-      {pastedUrl && <input type="hidden" name="image_url" value={pastedUrl} />}
+      {allowUrl && pastedUrl && (
+        <input type="hidden" name="image_url" value={pastedUrl} />
+      )}
       {cleared && <input type="hidden" name="image_clear" value="1" />}
     </div>
   );

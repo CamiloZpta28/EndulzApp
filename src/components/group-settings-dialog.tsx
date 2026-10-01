@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Pencil, Settings2, Sparkles, Trash2 } from "lucide-react";
+import { EyeOff, Package, Pencil, Settings2, Sparkles, Trash2 } from "lucide-react";
 
 import { BudgetFields } from "@/components/budget-fields";
 import { EmojiPicker } from "@/components/emoji-picker";
@@ -22,7 +22,74 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { deleteGroup, updateGroup } from "@/lib/actions/groups";
 import { idle } from "@/lib/actions/types";
-import type { Group } from "@/lib/types";
+import type { DeliveryMode, Group } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+const MODES: {
+  value: DeliveryMode;
+  title: string;
+  hint: string;
+  icon: typeof Package;
+}[] = [
+  {
+    value: "en_persona",
+    title: "En persona",
+    hint: "Se reúnen, todo va a una bolsa y cada quien saca la suya. Cada uno marca cuando la tiene lista.",
+    icon: Package,
+  },
+  {
+    value: "escondida",
+    title: "A escondidas",
+    hint: "Cada quien la deja donde pueda y avisa por la app dónde quedó, con foto si quiere. Sin decir quién es.",
+    icon: EyeOff,
+  },
+];
+
+/**
+ * El modo de entrega. Solo sale si la columna existe (patch 012): si no, el
+ * formulario no manda el campo y la acción no lo toca.
+ */
+function DeliveryModeField({ defaultValue }: { defaultValue: DeliveryMode }) {
+  const [value, setValue] = useState(defaultValue);
+  return (
+    <fieldset className="space-y-2">
+      <legend className="mb-2 text-sm font-medium">
+        ¿Cómo se entregan las endulzadas?
+      </legend>
+      {MODES.map((mode) => {
+        const Icon = mode.icon;
+        const active = value === mode.value;
+        return (
+          <label
+            key={mode.value}
+            className={cn(
+              "flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors",
+              active ? "border-primary bg-primary/5" : "hover:bg-muted/50",
+            )}
+          >
+            <input
+              type="radio"
+              name="delivery_mode"
+              value={mode.value}
+              checked={active}
+              onChange={() => setValue(mode.value)}
+              className="accent-primary mt-1"
+            />
+            <span className="space-y-0.5">
+              <span className="flex items-center gap-1.5 text-sm font-medium">
+                <Icon className="size-3.5" aria-hidden />
+                {mode.title}
+              </span>
+              <span className="text-muted-foreground block text-xs">
+                {mode.hint}
+              </span>
+            </span>
+          </label>
+        );
+      })}
+    </fieldset>
+  );
+}
 
 /**
  * `variant` decide cómo se abre:
@@ -99,6 +166,10 @@ export function GroupSettingsDialog({
           />
 
           <EndulzadaSchedule defaultDates={endulzadaDates} />
+
+          {group.delivery_mode && (
+            <DeliveryModeField defaultValue={group.delivery_mode} />
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="settings-reveal-at" className="flex items-center gap-1.5">
