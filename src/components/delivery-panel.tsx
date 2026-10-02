@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import {
   Check,
+  ChevronDown,
   EyeOff,
   Gift,
   Package,
@@ -433,74 +434,90 @@ function ReceivedCard({
 
   const found = delivery.status === "encontrada";
 
+  // Plegable: abierta mientras la esté buscando —es lo único de la pestaña
+  // con prisa—, y doblada una vez la encontró, para que no ocupe media
+  // pantalla con la foto cada vez que se entra al grupo.
+  //
+  // `open` cambia solo cuando cambia el estado. Si la persona la abre o la
+  // cierra a mano, el refresco automático no se lo deshace (React no toca el
+  // atributo si la prop no cambió); y al tocar "¡La encontré!" se dobla sola.
   return (
-    <section
+    <details
+      open={!found}
       className={cn(
-        "space-y-3 rounded-xl border p-4",
+        "group rounded-xl border",
         found ? "bg-card" : "border-[var(--endulzada)]",
       )}
       style={found ? undefined : { backgroundColor: "var(--endulzada-soft)" }}
     >
-      <div className="space-y-0.5">
-        <h3
-          className="flex items-center gap-1.5 font-semibold"
-          style={{ color: found ? undefined : "var(--endulzada)" }}
-        >
-          {found ? (
-            <PackageCheck className="size-4" aria-hidden />
-          ) : (
-            <Gift className="size-4" aria-hidden />
-          )}
-          {found ? "Ya la encontraste" : "¡Te dejaron una endulzada!"}
-        </h3>
-        <p className="text-muted-foreground text-xs">
-          Endulzada del {shortDate(delivery.happens_on)} · la dejaron{" "}
-          {deliveredWhen(delivery.delivered_on)}
-        </p>
+      <summary className="flex cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <h3
+            className="flex items-center gap-1.5 font-semibold"
+            style={{ color: found ? undefined : "var(--endulzada)" }}
+          >
+            {found ? (
+              <PackageCheck className="size-4 shrink-0" aria-hidden />
+            ) : (
+              <Gift className="size-4 shrink-0" aria-hidden />
+            )}
+            {found ? "Ya la encontraste" : "¡Te dejaron una endulzada!"}
+          </h3>
+          <p className="text-muted-foreground text-xs">
+            Endulzada del {shortDate(delivery.happens_on)} · la dejaron{" "}
+            {deliveredWhen(delivery.delivered_on)}
+          </p>
+        </div>
+        <ChevronDown
+          className="text-muted-foreground size-4 shrink-0 transition-transform group-open:rotate-180"
+          aria-hidden
+        />
+      </summary>
+
+      <div className="space-y-3 px-4 pb-4">
+        {delivery.message && (
+          <p className="bg-background/70 rounded-lg p-3 text-sm whitespace-pre-line">
+            {delivery.message}
+          </p>
+        )}
+        {delivery.photoUrl && <Photo src={delivery.photoUrl} />}
+
+        {/* Dos botones y nada más: responder no revela nada, porque quien la
+            dejó ya sabe a quién se la dejó. */}
+        <form action={action} className="flex gap-2">
+          <input type="hidden" name="group_id" value={groupId} />
+          <input type="hidden" name="delivery_id" value={delivery.delivery_id} />
+          <Button
+            type="submit"
+            name="status"
+            value="encontrada"
+            variant={found ? "default" : "outline"}
+            className="flex-1"
+            aria-pressed={found}
+          >
+            <Check className="size-4" aria-hidden />
+            ¡La encontré!
+          </Button>
+          <Button
+            type="submit"
+            name="status"
+            value="no_la_encuentro"
+            variant={delivery.status === "no_la_encuentro" ? "default" : "outline"}
+            className="flex-1"
+            aria-pressed={delivery.status === "no_la_encuentro"}
+          >
+            <Search className="size-4" aria-hidden />
+            No la encuentro
+          </Button>
+        </form>
+
+        {delivery.status === "no_la_encuentro" && (
+          <p className="text-muted-foreground text-xs">
+            Ya le avisamos. Cuando te dé otra pista, te llega acá.
+          </p>
+        )}
       </div>
-
-      {delivery.message && (
-        <p className="bg-background/70 rounded-lg p-3 text-sm whitespace-pre-line">
-          {delivery.message}
-        </p>
-      )}
-      {delivery.photoUrl && <Photo src={delivery.photoUrl} />}
-
-      {/* Dos botones y nada más: responder no revela nada, porque quien la
-          dejó ya sabe a quién se la dejó. */}
-      <form action={action} className="flex gap-2">
-        <input type="hidden" name="group_id" value={groupId} />
-        <input type="hidden" name="delivery_id" value={delivery.delivery_id} />
-        <Button
-          type="submit"
-          name="status"
-          value="encontrada"
-          variant={found ? "default" : "outline"}
-          className="flex-1"
-          aria-pressed={found}
-        >
-          <Check className="size-4" aria-hidden />
-          ¡La encontré!
-        </Button>
-        <Button
-          type="submit"
-          name="status"
-          value="no_la_encuentro"
-          variant={delivery.status === "no_la_encuentro" ? "default" : "outline"}
-          className="flex-1"
-          aria-pressed={delivery.status === "no_la_encuentro"}
-        >
-          <Search className="size-4" aria-hidden />
-          No la encuentro
-        </Button>
-      </form>
-
-      {delivery.status === "no_la_encuentro" && (
-        <p className="text-muted-foreground text-xs">
-          Ya le avisamos. Cuando te dé otra pista, te llega acá.
-        </p>
-      )}
-    </section>
+    </details>
   );
 }
 
